@@ -48,22 +48,35 @@ public class DetectFaces {
 				faces = faceDetector.detectFaces(Transforms.calculateIntensity(frame));// detect a face from each frame
 																						// of the video
 				aligner = new AffineAligner(); // the aligner aligns the face in a right position to be recognized later
-				
+				int index = 0;
+				long start = System.currentTimeMillis();
+				long time=0;
 				for (KEDetectedFace face : faces) {
-					int index = 0;
 					aligner.align(face);
 					faceCapture = face.getFacePatch();
 					try {
 						String path = "C:/Users/Zein/Desktop/capturedFace/";
 						String name = index + ".jpg";
+						
+						/*
+						long s = System.currentTimeMillis();
+						if (s > start + 1000) {
+							start = s;
+							System.out.println(s);
+							ImageUtilities.write(faceCapture, new File(path + name));
+						}
+						time= System.currentTimeMillis()/1000;*/
+						index++;
 						ImageUtilities.write(faceCapture, new File(path + name));
+						
+						
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
 
 					System.out.println(faceCapture);
 					frame.drawShape(face.getBounds(), RGBColour.RED);
-					index++;	
+					
 				}
 
 			}

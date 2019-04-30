@@ -16,6 +16,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import com.fr.services.FrService;
+
 @Path("/image")
 public class ImageResource {
 	//TODO to be removed later this method is just for testing
@@ -28,12 +30,10 @@ public class ImageResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response recieveCapturedFace(String code) throws IOException {
-		byte[] codedImage = Base64.getDecoder().decode(code);
-
-		ByteArrayInputStream recievedImage = new ByteArrayInputStream(codedImage);
-		BufferedImage image = ImageIO.read(recievedImage);
-		if (codedImage.length > 0) {
-			ImageIO.write(image, "png", new File("path to write the recieved image"));
+		FrService frService= new FrService();
+		BufferedImage image = frService.recieveFace(code);
+		if (image!=null) {
+			ImageIO.write(image, "png", new File("C:/Users/Zein/Desktop/face.png"));
 			return Response.status(Status.CREATED).build();
 		} else {
 
