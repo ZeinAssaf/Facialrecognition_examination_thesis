@@ -56,7 +56,6 @@ public class DetectFaces {
 		display.addVideoListener(new VideoDisplayListener<MBFImage>() {
 			public void afterUpdate(VideoDisplay<MBFImage> display) {
 			}
-			
 
 			// Here the capturing of a face happens
 			public void beforeUpdate(MBFImage frame) {
@@ -71,7 +70,7 @@ public class DetectFaces {
 						aligner.align(face);
 						faceCapture = face.getFacePatch();
 						BufferedImage asd = ImageUtilities.createBufferedImageForDisplay(faceCapture, null);
-						asd=resize(asd);
+						asd = resize(asd);
 						ImageIO.write(asd, "jpg", new File("C:/Users/Zein/Desktop/new.jpg"));
 						frame.drawShape(face.getBounds(), RGBColour.RED);
 					}
@@ -83,22 +82,27 @@ public class DetectFaces {
 		});
 	}
 
-	public byte[] encryptAES(String encodedMessage,SecretKey secretKey,byte[]initializationVector) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
-		final String AES_CIPHER="AES/CBC/PKCS5Padding";
-		Cipher cipher= Cipher.getInstance(AES_CIPHER);
-		IvParameterSpec parameterSpec=new IvParameterSpec(initializationVector);
+	public byte[] encryptAES(String encodedMessage, SecretKey secretKey, byte[] initializationVector)
+			throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException,
+			InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+		final String AES_CIPHER = "AES/CBC/PKCS5Padding";
+		Cipher cipher = Cipher.getInstance(AES_CIPHER);
+		IvParameterSpec parameterSpec = new IvParameterSpec(initializationVector);
 		cipher.init(Cipher.ENCRYPT_MODE, secretKey, parameterSpec);
 		return cipher.doFinal(encodedMessage.getBytes());
 	}
-	public String decryptAES(byte[]encrptedImage,SecretKey secretKey,byte[]initializationVector) throws InvalidKeyException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
-		final String AES_CIPHER="AES/CBC/PKCS5Padding";
-		Cipher cipher= Cipher.getInstance(AES_CIPHER);
-		IvParameterSpec parameterSpec=new IvParameterSpec(initializationVector);
+
+	public String decryptAES(byte[] encrptedImage, SecretKey secretKey, byte[] initializationVector)
+			throws InvalidKeyException, InvalidAlgorithmParameterException, NoSuchAlgorithmException,
+			NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
+		final String AES_CIPHER = "AES/CBC/PKCS5Padding";
+		Cipher cipher = Cipher.getInstance(AES_CIPHER);
+		IvParameterSpec parameterSpec = new IvParameterSpec(initializationVector);
 		cipher.init(Cipher.DECRYPT_MODE, secretKey, parameterSpec);
-		byte[] s=cipher.doFinal(encrptedImage);
+		byte[] s = cipher.doFinal(encrptedImage);
 		return new String(s);
 	}
-	
+
 	public String convertImageToString(BufferedImage image) {
 		ByteArrayOutputStream arrayFace = new ByteArrayOutputStream();
 		try {
