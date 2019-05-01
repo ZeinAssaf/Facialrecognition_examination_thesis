@@ -2,11 +2,26 @@ package com.facialdetection;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.List;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.imageio.ImageIO;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
 
 import org.openimaj.image.FImage;
 import org.openimaj.image.ImageUtilities;
@@ -41,74 +56,85 @@ public class DetectFaces {
 		display.addVideoListener(new VideoDisplayListener<MBFImage>() {
 			public void afterUpdate(VideoDisplay<MBFImage> display) {
 			}
+			
 
 			// Here the capturing of a face happens
 			public void beforeUpdate(MBFImage frame) {
-				faceDetector = new FKEFaceDetector(40);
+				// A list to store the captured faces
+				faceDetector = new FKEFaceDetector(60);
 				faces = faceDetector.detectFaces(Transforms.calculateIntensity(frame));// detect a face from each frame
-																						// of the video
-				aligner = new AffineAligner(); // the aligner aligns the face in a right position to be recognized later
-				int index = 0;
-				long start = System.currentTimeMillis();
-				long time=0;
-				for (KEDetectedFace face : faces) {
-					aligner.align(face);
-					faceCapture = face.getFacePatch();
-					try {
-						String path = "C:/Users/Zein/Desktop/capturedFace/";
-						String name = index + ".jpg";
-						
-						/*
-						long s = System.currentTimeMillis();
-						if (s > start + 1000) {
-							start = s;
-							System.out.println(s);
-							ImageUtilities.write(faceCapture, new File(path + name));
-						}
-						time= System.currentTimeMillis()/1000;*/
-						index++;
-						ImageUtilities.write(faceCapture, new File(path + name));
-						
-						
-					} catch (IOException e) {
-						e.printStackTrace();
+				try {
+					// of the video
+					aligner = new AffineAligner(); // the aligner aligns the face in a right position to be recognized
+													// later
+					for (KEDetectedFace face : faces) {
+						aligner.align(face);
+						faceCapture = face.getFacePatch();
+						BufferedImage asd = ImageUtilities.createBufferedImageForDisplay(faceCapture, null);
+						asd=resize(asd);
+						ImageIO.write(asd, "jpg", new File("C:/Users/Zein/Desktop/new.jpg"));
+						frame.drawShape(face.getBounds(), RGBColour.RED);
 					}
 
-					System.out.println(faceCapture);
-					frame.drawShape(face.getBounds(), RGBColour.RED);
-					
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-
 			}
 		});
+	}
+
+	public byte[] encryptAES(String encodedMessage,SecretKey secretKey,byte[]initializationVector) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+		final String AES_CIPHER="AES/CBC/PKCS5Padding";
+		Cipher cipher= Cipher.getInstance(AES_CIPHER);
+		IvParameterSpec parameterSpec=new IvParameterSpec(initializationVector);
+		cipher.init(Cipher.ENCRYPT_MODE, secretKey, parameterSpec);
+		return cipher.doFinal(encodedMessage.getBytes());
+	}
+	public String decryptAES(byte[]encrptedImage,SecretKey secretKey,byte[]initializationVector) throws InvalidKeyException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
+		final String AES_CIPHER="AES/CBC/PKCS5Padding";
+		Cipher cipher= Cipher.getInstance(AES_CIPHER);
+		IvParameterSpec parameterSpec=new IvParameterSpec(initializationVector);
+		cipher.init(Cipher.DECRYPT_MODE, secretKey, parameterSpec);
+		byte[] s=cipher.doFinal(encrptedImage);
+		return new String(s);
+	}
+	
+	public String convertImageToString(BufferedImage image) {
+		ByteArrayOutputStream arrayFace = new ByteArrayOutputStream();
+		try {
+			ImageIO.write(image, "png", arrayFace);
+			byte[] byteFace = arrayFace.toByteArray();
+			String encodedImage = Base64.getEncoder().encodeToString(byteFace);
+			return encodedImage;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public BufferedImage resize(BufferedImage input) throws IOException {
+		BufferedImage output = new BufferedImage(89, 114, input.getType());
+		Graphics2D g = output.createGraphics();
+
+		g.drawImage(input, 0, 0, 89, 114, null);
+		g.dispose();
+		ImageIO.write(output, "jpg", new File("C:/Users/Zein/Desktop/resizedFaces/face.jpg"));
+		return output;
 
 	}
 
-	/**
-	 * This method is used to make all the captured images in the same size so they
-	 * can be compared
-	 *
-	 * @param path   is the path to the image
-	 * @param name   file name
-	 * @param width
-	 * @param height
-	 */
-	public void resizeImage(String path, String name, int width, int height, String filetype) {
-		for (int i = 0; i < 100; i++) {
-			try {
-				BufferedImage input = ImageIO.read(new File(path));
-				BufferedImage output = new BufferedImage(width, height, input.getType());
-				Graphics2D g = output.createGraphics();
-				g.drawImage(input, 0, 0, width, height, null);
-				g.dispose();
-				ImageIO.write(output, filetype, new File(path + name));
+	public void postImage(String targetURL, String encodedImage) {
+		try {
+			Client client = ClientBuilder.newClient();
+			Response response = client.target(targetURL).request().post(Entity.json(encodedImage));
 
-			} catch (Exception e) {
-				System.err.println("File not found or currupted, check that teh specified file is an image");
-				e.printStackTrace();
-			}
-
+			// TODO to be removed later
+			System.out.println(response);
+		} catch (Exception e) {
+			// TODO: handle exception
 		}
 
 	}
+
 }

@@ -1,5 +1,6 @@
 package com.fr.services;
 
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -50,6 +51,31 @@ public class FrService {
 			return String.valueOf(distance);
 		}
 		return null;
+
+	}
+
+	/**
+	 * This method is used to make all the captured images in the same size so they
+	 * can be compared
+	 *
+	 * @param path   is the path to the image
+	 * @param name   file name
+	 * @param width
+	 * @param height
+	 */
+	public void resizeImage(String path, String name, int width, int height, String filetype) {
+		try {
+			BufferedImage input = ImageIO.read(new File(path));
+			BufferedImage output = new BufferedImage(width, height, input.getType());
+			Graphics2D g = output.createGraphics();
+			g.drawImage(input, 0, 0, width, height, null);
+			g.dispose();
+			ImageIO.write(output, filetype, new File(path + name));
+
+		} catch (Exception e) {
+			System.err.println("File not found or currupted, check that teh specified file is an image");
+			e.printStackTrace();
+		}
 
 	}
 
