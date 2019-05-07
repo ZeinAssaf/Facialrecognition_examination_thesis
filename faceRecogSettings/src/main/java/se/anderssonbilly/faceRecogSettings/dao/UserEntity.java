@@ -23,13 +23,20 @@ public class UserEntity {
 	private String password;
 	private String passwordConfirm;
 	private Set<RoleEntity> roles;
-
+	private SettingsEntity settings;
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	public Long getId() {
 		return id;
 	}
 
+	@OneToOne(cascade = CascadeType.ALL)
+	@JoinColumn(name = "settings_id", referencedColumnName = "id")
+	public SettingsEntity getSettings() {
+		return settings;
+	}
+	
 	@Transient
 	public String getPasswordConfirm() {
 		return passwordConfirm;
