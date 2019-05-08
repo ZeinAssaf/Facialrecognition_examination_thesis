@@ -7,8 +7,139 @@
 <body>
   <div th:fragment="content">
     <!--  -->
+    <!-- 
+Key
 
+Notification method
+  Add
+  Remove
+  
+Notification on exists or not
+
+Face
+  Add
+  Remove
+
+Change Password 
+-->
     <h1>Settings</h1>
+
+    <div class="grid-x grid-padding-x">
+      <div class="large-4 cell"></div>
+      <div class="large-4 cell">
+
+        <label for="api-key">Api key: <input type="text" name="api-key" id="api-key" th:value="${settings.apiKey}" readonly></label>
+
+        <form id="face-form">
+          <label>Faces: <select id="faces">
+              <option th:each="face:${settings.faces}" th:text="${face.name}" th:id="${face.id}" th:value="${face.id}"></option>
+              <option th:if="${#lists.isEmpty(settings.faces)}">None</option>
+          </select>
+          </label>
+          <div class="button-group">
+            <a class="button" data-open="add-face-modal">Create</a> <a id="remove-face" class="button error" th:classappend="${#lists.isEmpty(settings.faces)} ? disabled">Remove</a>
+          </div>
+
+          <div class="reveal" id="add-face-modal" data-reveal>
+            <h1>Create Face</h1>
+            <label for="face-name">Name:<input type="text" name="face-name" id="face-name"></label> <a href="javascript:void(0)" class="button success float-right"
+              id="add-face">Add</a>
+            <button class="close-button" data-close aria-label="Close modal" type="button">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        </form>
+
+      </div>
+      <div class="large-4 cell"></div>
+    </div>
+
+
+
+    <script type="text/javascript">
+          function r(f) {
+            /in/.test(document.readyState) ? setTimeout('r(' + f + ')', 9) : f()
+          }
+
+          r(function() {
+
+            $("#add-face").on("click", function() {
+              if (!$(this).hasClass("disabled")) {
+                $(this).addClass("disabled");
+                $.ajax({
+                  type : "POST",
+                  contentType : "application/json",
+                  url : "/addFace",
+                  data : JSON.stringify($("#face-name").val()),
+                  timeout : 500000,
+                  success : function(data) {
+                    console.log("success: " + data);
+                    $(".close-button").click();
+                    $("#face-name").val("");
+                    $("#add-face").removeClass("disabled");
+                    getFaces();
+                  },
+                  error : function(e) {
+                    console.log(e);
+                    $("#add-face").removeClass("disabled");
+                  }
+                })
+              }
+            });
+
+            $("#remove-face").on("click", function() {
+              if (!$(this).hasClass("disabled")) {
+                $(this).addClass("disabled");
+                $.ajax({
+                  type : "POST",
+                  contentType : "application/json",
+                  url : "/removeFace",
+                  data : JSON.stringify($("#faces").val()),
+                  timeout : 500000,
+                  success : function(data) {
+                    console.log("success: " + data);
+                    getFaces();
+                  },
+                  error : function(e) {
+                    console.log(e);
+                    $("#remove-face").removeClass("disabled");
+                  }
+                })
+              }
+            });
+            
+            getFaces = function() {
+              console.log("loading")
+              $.ajax({
+                type : "GET",
+                contentType : "application/json",
+                url : "/getFaces",
+                dataType : 'json',
+                timeout : 500000,
+                success : function(data) {
+                  console.log("success: " + data);
+				  
+                  if(data.length > 0){
+                    $("#remove-face").removeClass("disabled");
+                    $("#faces").html("");
+                    
+                    $.each(data, function(i, val){
+                      $("#faces").append("<option id='" + val.id + "' value='" + val.id + "'>" + val.name + "</option>");
+                    });
+                  }else{
+                    $("#faces").html("<option>None</option>");
+                  }
+                },
+                error : function(e) {
+                  console.log(e);
+
+                }
+              })
+            }
+
+          });
+        </script>
+
     <!--  -->
   </div>
 </body>
