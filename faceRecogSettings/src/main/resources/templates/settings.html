@@ -37,18 +37,28 @@ Change Password
           </select>
           </label>
           <div class="button-group">
-            <a class="button" data-open="add-face-modal">Create</a> <a id="remove-face" class="button error" th:classappend="${#lists.isEmpty(settings.faces)} ? disabled">Remove</a>
+            <a class="button" id="open-face-modal" data-open="add-face-modal">Create</a> <a id="remove-face" class="button error"
+              th:classappend="${#lists.isEmpty(settings.faces)} ? disabled">Remove</a>
           </div>
 
           <div class="reveal" id="add-face-modal" data-reveal>
             <h1>Create Face</h1>
             <label for="face-name">Name:<input type="text" name="face-name" id="face-name"></label> <a href="javascript:void(0)" class="button success float-right"
               id="add-face">Add</a>
+            <p id="modal-error" class="error"></p>
             <button class="close-button" data-close aria-label="Close modal" type="button">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>
         </form>
+
+        <fieldset class="large-5 cell">
+          <legend>Notification if face is</legend>
+          <input type="radio" name="notify-if" value="true" id="notify-if-true" required>
+          <label for="notify-if-true">detected</label>
+          <input type="radio" name="notify-if" value="false" id="notify-if-false">
+          <label for="notify-if-false">not detected</label>
+        </fieldset>
 
       </div>
       <div class="large-4 cell"></div>
@@ -63,80 +73,124 @@ Change Password
 
           r(function() {
 
+            ///////////////////////////////
+            // Adding and removing faces //
+            ///////////////////////////////
+            //
+            
+            // Clear name text input when opening modal
+            $("#open-face-modal").on("click", function() {
+              $("#face-name").val("");
+            });
+
+            // Call ajax POST to add face to db
             $("#add-face").on("click", function() {
               if (!$(this).hasClass("disabled")) {
                 $(this).addClass("disabled");
-                $.ajax({
-                  type : "POST",
-                  contentType : "application/json",
-                  url : "/addFace",
-                  data : JSON.stringify($("#face-name").val()),
-                  timeout : 500000,
-                  success : function(data) {
-                    console.log("success: " + data);
-                    $(".close-button").click();
-                    $("#face-name").val("");
-                    $("#add-face").removeClass("disabled");
-                    getFaces();
-                  },
-                  error : function(e) {
-                    console.log(e);
-                    $("#add-face").removeClass("disabled");
-                  }
-                })
+                ajaxPost("/addFace", $("#face-name").val(), function(data) {
+                  $(".close-button").click();
+                  $("#face-name").val("");
+                  $("#add-face").removeClass("disabled");
+                  getFaces();
+                }, function(data) {
+                  $("#add-face").removeClass("disabled");
+                });
               }
             });
 
-            $("#remove-face").on("click", function() {
+            // Call ajax POST to remove face from db
+            $("#remove-face").on("click", function(data) {
               if (!$(this).hasClass("disabled")) {
                 $(this).addClass("disabled");
-                $.ajax({
-                  type : "POST",
-                  contentType : "application/json",
-                  url : "/removeFace",
-                  data : JSON.stringify($("#faces").val()),
-                  timeout : 500000,
-                  success : function(data) {
-                    console.log("success: " + data);
-                    getFaces();
-                  },
-                  error : function(e) {
-                    console.log(e);
-                    $("#remove-face").removeClass("disabled");
-                  }
-                })
+                ajaxPost("/removeFace", $("#faces").val(), function() {
+                  getFaces();
+                }, function(data) {
+                  $("#remove-face").removeClass("disabled");
+                });
               }
             });
+
+            // Method to GET faces from db
+            var getFaces = function() {
+              console.log("loading");
+              ajaxGet("/getFaces", function(data) {
+                $("#faces").html("");
+                if (data.length > 0) {
+                  $("#remove-face").removeClass("disabled");
+                  $.each(data, function(i, val) {
+                    $("#faces").append("<option id='" + val.id + "' value='" + val.id + "'>" + val.name + "</option>");
+                  });
+                } else {
+                  $("#faces").append("<option>None</option>");
+                }
+              }, function(data) {
+              });
+            }
+
+            //
+            ///////////////////////////////
             
-            getFaces = function() {
-              console.log("loading")
+            ///////////////////
+            // Notifications //
+            ///////////////////
+            //
+            
+            // ajax post when changing notification
+            
+            // Adding notification methods same way as adding faces
+            
+            //
+            ///////////////////
+            
+            /////////////
+			// Methods //
+            /////////////
+            //
+            
+            // ajaxPOST method
+            var ajaxPost = function(url, data, success, error) {
+              $("#modal-error").text();
               $.ajax({
-                type : "GET",
+                type : "POST",
                 contentType : "application/json",
-                url : "/getFaces",
-                dataType : 'json',
+                url : url,
+                data : JSON.stringify(data),
                 timeout : 500000,
                 success : function(data) {
                   console.log("success: " + data);
-				  
-                  if(data.length > 0){
-                    $("#remove-face").removeClass("disabled");
-                    $("#faces").html("");
-                    
-                    $.each(data, function(i, val){
-                      $("#faces").append("<option id='" + val.id + "' value='" + val.id + "'>" + val.name + "</option>");
-                    });
-                  }else{
-                    $("#faces").html("<option>None</option>");
-                  }
+                  success(data);
                 },
                 error : function(e) {
                   console.log(e);
-
+                  error(e);
+                  $("#modal-error").text(e.responseText);
                 }
               })
             }
 
+            // ajaxGET method
+            var ajaxGet = function(url, success, error) {
+              $("#modal-error").text();
+              $.ajax({
+                type : "GET",
+                contentType : "application/json",
+                url : url,
+                dataType : 'json',
+                timeout : 500000,
+                success : function(data) {
+                  console.log("success: " + data);
+                  success(data);
+                },
+                error : function(e) {
+                  console.log(e);
+                  error(data);
+                  $("#modal-error").text(data);
+                }
+              })
+            }
+            
+            //
+            /////////////
           });
         </script>
 

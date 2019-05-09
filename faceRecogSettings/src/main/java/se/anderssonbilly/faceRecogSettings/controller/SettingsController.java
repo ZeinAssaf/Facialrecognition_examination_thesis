@@ -1,6 +1,5 @@
 package se.anderssonbilly.faceRecogSettings.controller;
 
-import java.util.ArrayList;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,9 +10,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import se.anderssonbilly.faceRecogSettings.dao.FaceEntity;
 import se.anderssonbilly.faceRecogSettings.dao.FaceRepository;
@@ -45,12 +41,12 @@ public class SettingsController {
 		System.out.println("Adding face with name: " + name);
 
 		// TODO validate input
-		FaceEntity face = new FaceEntity();
-		face.setName(name);
-		face.setSettings(userService.findByUsername(securityService.findLoggedInUsername()).getSettings());
-		faceRepository.save(face);
+//		FaceEntity face = new FaceEntity();
+//		face.setName(name);
+//		face.setSettings(userService.findByUsername(securityService.findLoggedInUsername()).getSettings());
+//		faceRepository.save(face);
 		
-		return new ResponseEntity<>("Message", HttpStatus.OK);
+		return new ResponseEntity<>("responseText", HttpStatus.BAD_REQUEST);
 	}
 
 	@RequestMapping(value = "/removeFace", method = RequestMethod.POST)
@@ -61,7 +57,7 @@ public class SettingsController {
 		// TODO validate input
 		faceRepository.deleteById(id);
 		
-		return new ResponseEntity<>("Message", HttpStatus.OK);
+		return new ResponseEntity<>("responseText", HttpStatus.OK);
 	}
 	
 	@RequestMapping(value = "/getFaces", method = RequestMethod.GET)
