@@ -1,7 +1,8 @@
 package se.anderssonbilly.faceRecogSettings.dao;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -22,8 +23,10 @@ public class NotificationEntity {
 
 	private Long id;
 
-	@Column(unique = true)
+	@Enumerated(EnumType.STRING)
+	private NotificationTypeEnum notificationType;
 	private String name;
+	
 	private SettingsEntity settings;
 	
 	@ManyToOne

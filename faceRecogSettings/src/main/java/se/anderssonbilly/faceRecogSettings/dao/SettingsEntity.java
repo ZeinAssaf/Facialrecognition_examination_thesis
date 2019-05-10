@@ -35,6 +35,8 @@ public class SettingsEntity {
 
 	private Set<NotificationEntity> notifications;
 
+	private boolean notifyIfDetected = true;
+	
 	@OneToOne(mappedBy = "settings")
 	public UserEntity getUser() {
 		return user;

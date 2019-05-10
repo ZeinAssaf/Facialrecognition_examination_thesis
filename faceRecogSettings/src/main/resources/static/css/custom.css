@@ -12,6 +12,12 @@
 	margin-bottom: 0em;
 }
 
+.success {
+	color: green;
+	font-style: italic;
+	margin-bottom: 0em;
+}
+
 .inputError {
 	background-color: #e83737;
 }

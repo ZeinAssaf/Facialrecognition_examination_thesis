@@ -54,12 +54,13 @@ Change Password
 
         <fieldset class="large-5 cell">
           <legend>Notification if face is</legend>
-          <input type="radio" name="notify-if" value="true" id="notify-if-true" required>
+          <input type="radio" name="notify-if" value="true" th:checked="${settings.notifyIfDetected == true}? true : false" id="notify-if-true" required>
           <label for="notify-if-true">detected</label>
-          <input type="radio" name="notify-if" value="false" id="notify-if-false">
+          <input type="radio" name="notify-if" value="false" th:checked="${settings.notifyIfDetected == true}? false : true" id="notify-if-false">
           <label for="notify-if-false">not detected</label>
+          <label id="notifyIfStatus" class=""></label>
         </fieldset>
-
+          
       </div>
       <div class="large-4 cell"></div>
     </div>
@@ -94,6 +95,7 @@ Change Password
                   getFaces();
                 }, function(data) {
                   $("#add-face").removeClass("disabled");
+                  $("#modal-error").text(data);
                 });
               }
             });
@@ -106,6 +108,7 @@ Change Password
                   getFaces();
                 }, function(data) {
                   $("#remove-face").removeClass("disabled");
+                  $("#modal-error").text(data);
                 });
               }
             });
@@ -124,6 +127,7 @@ Change Password
                   $("#faces").append("<option>None</option>");
                 }
               }, function(data) {
+                $("#modal-error").text(data);
               });
             }
 
@@ -135,7 +139,15 @@ Change Password
             ///////////////////
             //
             
-            // ajax post when changing notification
+            // Make Ajax POST when chinging notify if
+            $("input[type=radio][name=notify-if]").on("change",function(){
+              console.log($(this).val());
+              ajaxPost("/updateNotifyIf",$(this).val(),function(data){
+                $("#notifyIfStatus").removeClass("error").addClass("success").text("Change applied successfully");
+              },function(data){
+                $("#notifyIfStatus").removeClass("success").addClass("error").text("Error: " + data);
+              });
+            });
             
             // Adding notification methods same way as adding faces
             
@@ -163,7 +175,6 @@ Change Password
                 error : function(e) {
                   console.log(e);
                   error(e);
-                  $("#modal-error").text(e.responseText);
                 }
               })
             }
@@ -183,8 +194,7 @@ Change Password
                 },
                 error : function(e) {
                   console.log(e);
-                  error(data);
-                  $("#modal-error").text(data);
+                  error(e);
                 }
               })
             }
