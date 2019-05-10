@@ -11,7 +11,7 @@
     <div class="grid-x grid-padding-x">
       <div class="large-4 cell"></div>
       <div class="large-4 cell">
-        <form th:action="@{/register}" th:object="${user}" method="POST" enctype="utf8" class="log-in-form">
+        <form th:action="@{/register}" th:object="${user}" method="POST" enctype="utf8" class="form-border">
           <h4 class="text-center">Register</h4>
 
           <label>Username <input th:errorclass="inputError" th:field="*{username}" type="text" placeholder="Username">

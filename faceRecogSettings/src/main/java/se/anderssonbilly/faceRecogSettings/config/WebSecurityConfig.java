@@ -39,13 +39,13 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception {
 		http.authorizeRequests()
 				.antMatchers(
-						"/", "/home", "/settings", "/register", "/login", "/addFace", "/removeFace", "/getFaces", "/updateNotifyIf", "/css/**", "/js/**", "/img/**")
+						"/", "/home", "/settings", "/register", "/login", "/addFace", "/removeFace", "/getFaces", "/updateNotifyIf", "/addNotification", "/removeNotification", "/getNotifications", "/css/**", "/js/**", "/img/**")
 					.permitAll()
 					.anyRequest()
 					.hasAnyRole("ADMIN","USER")
 				.antMatchers("/admin")
 					.hasRole("ADMIN")
-				.antMatchers("/settings", "/addFace", "/removeFace", "/getFaces", "/updateNotifyIf")
+				.antMatchers("/settings", "/addFace", "/removeFace", "/getFaces", "/updateNotifyIf","/addNotification", "/removeNotification", "/getNotifications")
 					.authenticated()
 					.and()
 				.formLogin()
