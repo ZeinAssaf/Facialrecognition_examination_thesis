@@ -47,14 +47,14 @@ Change Password
               <h1>Create Face</h1>
               <label for="face-name">Name:<input type="text" name="face-name" id="face-name"></label> <a href="javascript:void(0)" class="button success float-right"
                 id="add-face">Add</a>
-              <p id="modal-error" class="error"></p>
+              <p class="modal-error error"></p>
               <button class="close-button" data-close aria-label="Close modal" type="button">
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
           </form>
         </fieldset>
-        
+
         <fieldset class="large-5 cell form-border">
           <legend>Notification if face is</legend>
           <input type="radio" name="notify-if" value="true" th:checked="${settings.notifyIfDetected == true}? true : false" id="notify-if-true" required> <label
@@ -65,39 +65,36 @@ Change Password
         <fieldset class="form-border">
           <legend>Manage Notifications</legend>
           <form id="notification-form">
-            <label>Notification methods: <select id="notification-methods" th:disabled="${#lists.isEmpty(settings.notifications)}">
-                <option th:each="notification:${settings.notifications}" th:text="${notification.type} + ' - ' + ${notification.name}" th:id="${notification.id}"
-                  th:value="${notification.id}"></option>
-                <option th:if="${#lists.isEmpty(settings.notifications)}">None</option>
-            </select>
-            </label>
-            <div class="button-group">
-              <a class="button" id="open-notification-modal" data-open="add-notification-modal">Create</a> <a id="remove-notification" class="button error"
-                th:classappend="${#lists.isEmpty(settings.notifications)} ? disabled">Remove</a>
+
+            <div th:each="name : ${T(se.anderssonbilly.faceRecogSettings.dao.NotificationTypeEnum).values()}" th:id="'notification-method-' + ${name} + 'container'">
+              <label><span th:text="${name}"></span> <select th:id="'notification-method-' + ${name}">
+              </select> </label>
+              <div class="button-group">
+                <a class="button open-notification-modal" th:data-notification-type="${name}" data-open="add-notification-modal">Create</a> <a
+                  class="remove-notification button error" th:data-notification-type="${name}" th:classappend="${#lists.isEmpty(settings.notifications)} ? disabled">Remove</a>
+              </div>
+              <hr>
             </div>
 
             <div class="reveal" id="add-notification-modal" data-reveal>
               <h1>Create Notification</h1>
-              <label for="notification-method">Notification method:<select name="notification-method" id="notification-method">
-                  <option th:each="name : ${T(se.anderssonbilly.faceRecogSettings.dao.NotificationTypeEnum).values()}" th:value="${name}" th:text="${name}"></option>
-              </select>
-              </label> <label for="notification-name">Send to:<input type="text" name="notification-name" id="notification-name"></label> <a href="javascript:void(0)"
-                class="button success float-right" id="add-notification">Add</a>
-              <p id="modal-error" class="error"></p>
+              <label for="notification-name"><span id="notification-text">Send to:</span><input type="text" name="notification-name" id="notification-name"></label> <a
+                href="javascript:void(0)" class="button success float-right" id="add-notification">Add</a>
+              <p class="modal-error error"></p>
               <button class="close-button" data-close aria-label="Close modal" type="button">
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
           </form>
         </fieldset>
-        
+
       </div>
       <div class="large-4 cell"></div>
     </div>
 
 
 
-    <script type="text/javascript">
+    <script th:inline="javascript" type="text/javascript">
           function r(f) {
             /in/.test(document.readyState) ? setTimeout('r(' + f + ')', 9) : f()
           }
@@ -117,17 +114,32 @@ Change Password
             var removeNotificationUrl = "/removeNotification";
             var getNotificationsUrl = "/getNotifications";
 
+            /*<![CDATA[*/
+            var notificationTypes = /*[[${T(se.anderssonbilly.faceRecogSettings.dao.NotificationTypeEnum).values()}]]*/;
+            var notifications = /*[[${settings.notifications}]]*/
+            /*]]>*/
+            
             //
             ///////////////
-
+            
+            //////////
+            // Init //
+            //////////
+            //
+            
+            displayNotifications();
+            
+            //
+            //////////
+            
             ///////////////////////////////
             // Adding and removing faces //
             ///////////////////////////////
             //
-
             // Clear name text input when opening modal
             $("#open-face-modal").on("click", function() {
               $("#face-name").val("");
+              $(".modal-error").text("");
             });
 
             // Call ajax POST to add face to db
@@ -141,7 +153,7 @@ Change Password
                   getFaces();
                 }, function(data) {
                   $("#add-face").removeClass("disabled");
-                  $("#modal-error").text(data);
+                  $(".modal-error").text(data);
                 });
               }
             });
@@ -154,7 +166,9 @@ Change Password
                   getFaces();
                 }, function(data) {
                   $("#remove-face").removeClass("disabled");
-                  $("#modal-error").text(data);
+              	 // TODO separate do you accept modal
+              	 // TODO Error outside of modal
+                  $(".modal-error").text(data.responseText);
                 });
               }
             });
@@ -165,17 +179,19 @@ Change Password
               ajaxGet(getFacesUrl, function(data) {
                 $("#faces").html("");
                 if (data.length > 0) {
-                  $("#faces").prop("disabled",false);
+                  $("#faces").prop("disabled", false);
                   $("#remove-face").removeClass("disabled");
                   $.each(data, function(i, val) {
                     $("#faces").append("<option id='" + val.id + "' value='" + val.id + "'>" + val.name + "</option>");
                   });
                 } else {
-                  $("#faces").prop("disabled",true);
+                  $("#faces").prop("disabled", true);
                   $("#faces").append("<option>None</option>");
                 }
               }, function(data) {
-                $("#modal-error").text(data);
+                //TODO error handling
+                // TODO error outside of modal
+                $(".modal-error").text(data.responseText);
               });
             }
 
@@ -186,7 +202,7 @@ Change Password
             // Notifications //
             ///////////////////
             //
-
+            
             // Make Ajax POST when changing notify if
             $("input[type=radio][name=notify-if]").on("change", function() {
               console.log($(this).val());
@@ -197,9 +213,31 @@ Change Password
               });
             });
 
-            // Clear name text input when opening modal
-            $("#open-notification-modal").on("click", function() {
-              $("#notification-name").val("");
+            // Clear text input when opening modal and set input to correct type
+            $(".open-notification-modal").on("click", function() {
+              var type = $(this).data("notification-type");
+              $("#notification-name").val("").attr("data-notification-type",$(this).data("notification-type"));
+              $(".modal-error").text("");
+              
+              switch(type){
+              case "email":
+                $("#notification-text").html("Email to recieve notifications:");
+                $("#notification-name").unbind("input keydown keyup mousedown mouseup select contextmenu drop");
+                $("#notification-name").inputFilter(function(value) {
+                  return /^[^ ]*$/i.test(value)
+                });
+                break;
+              case "sms":
+                $("#notification-text").html("Phone number to recieve notification:");
+                $("#notification-name").unbind("input keydown keyup mousedown mouseup select contextmenu drop");
+                $("#notification-name").inputFilter(function(value) {
+                  return /^\d*$/.test(value);
+                });
+                break;
+                default:
+                  $("#notification-text").html("Unknown input.");
+                  break;
+              }
             });
 
             // Call ajax POST to add notification to db
@@ -207,7 +245,7 @@ Change Password
               if (!$(this).hasClass("disabled")) {
                 $(this).addClass("disabled");
                 var payload = {
-                  "type" : $("#notification-method").val(),
+                  "type" : $("#notification-name").attr("data-notification-type"),
                   "name" : $("#notification-name").val()
                 }
                 ajaxPost(addNotificationUrl, payload, function(data) {
@@ -217,20 +255,24 @@ Change Password
                   getNotifications();
                 }, function(data) {
                   $("#add-notification").removeClass("disabled");
-                  $("#modal-error").text(data);
+                  $(".modal-error").text(data.responseText);
                 });
               }
             });
 
             // Call ajax POST to remove notification from db
-            $("#remove-notification").on("click", function(data) {
+            $(".remove-notification").on("click", function(data) {
+              var removeButton = $(this);
               if (!$(this).hasClass("disabled")) {
                 $(this).addClass("disabled");
-                ajaxPost(removeNotificationUrl, $("#notification-methods").val(), function() {
+                console.log("2");
+                ajaxPost(removeNotificationUrl, $("#notification-method-" + $(this).data("notification-type")).val(), function() {
                   getNotifications();
                 }, function(data) {
-                  $("#remove-notification").removeClass("disabled");
-                  $("#modal-error").text(data);
+                  removeButton.removeClass("disabled");
+                  // TODO separate do you accept modal
+                  // TODO Error outside of modal
+                  $(".modal-error").text(data.responseText);
                 });
               }
             });
@@ -239,24 +281,25 @@ Change Password
             var getNotifications = function() {
               console.log("loading");
               ajaxGet(getNotificationsUrl, function(data) {
-                $("#notification-methods").html("");
-                if (data.length > 0) {
-                  $("#notification-methods").prop("disabled",false);
-                  $("#remove-notification").removeClass("disabled");
-                  $.each(data, function(i, val) {
-                    $("#notification-methods").append(
-                        "<option id='" + val.id + "' value='" + val.id + "'>" + val.type + " - " + val.name
-                            + "</option>");
-                  });
-                } else {
-                  $("#notification-methods").prop("disabled",true);
-                  $("#notification-methods").append("<option>None</option>");
-                }
+                notifications = data;
+                displayNotifications();
               }, function(data) {
-                $("#modal-error").text(data);
+                //TODO error handling
+                // TODO error outside of modal
+                $(".modal-error").text(data.responseText);
               });
             }
-
+            
+            function displayNotifications(){
+              $("[id^=notification-method] select").html("");
+              
+              $.each(notifications, function(i,val){
+                $("#notification-method-" + val.type).append("<option id='" + val.id + "' value='" + val.id + "'>" + val.name + "</option>");
+              });
+              $("[id^=notification-method] select").attr("disabled",false).parent().parent().find(".remove-notification").removeClass("disabled");
+              $("[id^=notification-method] select:not(:has(option))").attr("disabled",true).append("<option>None</option>").parent().parent().find(".remove-notification").addClass("disabled");
+            }
+            
             //
             ///////////////////
 
@@ -267,7 +310,7 @@ Change Password
 
             // ajaxPOST method
             var ajaxPost = function(url, data, success, error) {
-              $("#modal-error").text();
+              $(".modal-error").text();
               $.ajax({
                 type : "POST",
                 contentType : "application/json",
@@ -285,7 +328,7 @@ Change Password
 
             // ajaxGET method
             var ajaxGet = function(url, success, error) {
-              $("#modal-error").text();
+              $(".modal-error").text();
               $.ajax({
                 type : "GET",
                 contentType : "application/json",
@@ -300,7 +343,21 @@ Change Password
                 }
               })
             }
-
+            
+         // Restricts input for each element in the set of matched elements to the given inputFilter.
+          $.fn.inputFilter = function(inputFilter) {
+            return this.on("input keydown keyup mousedown mouseup select contextmenu drop", function() {
+              if (inputFilter(this.value)) {
+                this.oldValue = this.value;
+                this.oldSelectionStart = this.selectionStart;
+                this.oldSelectionEnd = this.selectionEnd;
+              } else if (this.hasOwnProperty("oldValue")) {
+                this.value = this.oldValue;
+                this.setSelectionRange(this.oldSelectionStart, this.oldSelectionEnd);
+              }
+            });
+          };
+                  
             //
             /////////////
           });
