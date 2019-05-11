@@ -7,43 +7,39 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.hamcrest.TypeSafeMatcher;
+import org.hibernate.Session;
+import org.netlib.util.doubleW;
 import org.openimaj.feature.DoubleFV;
 import org.openimaj.feature.DoubleFVComparison;
 import org.openimaj.image.FImage;
 import org.openimaj.image.ImageUtilities;
 import org.openimaj.image.model.EigenImages;
 
+import com.fr.facerecognition.FaceRecognition;
+@SuppressWarnings("unchecked")
 public class ImageDoa {
-	public boolean recogniseFace(BufferedImage face) throws IOException {
-		List<FImage> basisImages = new ArrayList<>();
-		for (int i = 0; i < 100; i++) {
-			// read from the database
-			FImage image = ImageUtilities.readF(new File("C:/Users/Zein/Desktop/db_people/zein/" + i + ".png"));
-			basisImages.add(image);
-		}
-		// Number of vectors
-		int eigenvectors = 100;
-		EigenImages eigenModel = new EigenImages(eigenvectors);
-		eigenModel.train(basisImages);
-		System.out.println("Model is trained");
-		DoubleFV[] features = new DoubleFV[100];// number of samples, this will be a fixed number in the database
-		for (int i = 0; i < features.length; i++) {
-			// Extract the features from the learned images
-			FImage image = ImageUtilities.readF(new File("C:/Users/Zein/Desktop/db_people/zein/" + i + ".png"));
-			features[i] = eigenModel.extractFeature(image);
-		}
-		FImage image = new FImage(89,114);
-		image = ImageUtilities.assignBufferedImage(face, image);
-		DoubleFV feature = eigenModel.extractFeature(image);
-		List<Double> distances=new ArrayList<>();
-		for (int i = 0; i < features.length; i++) {
-			double distance = feature.compare(features[i], DoubleFVComparison.EUCLIDEAN);
+	FaceRecognition faceRecognition = new FaceRecognition();
+	
+	public boolean recogniseFace(BufferedImage capturedFace) throws IOException {
+		Session session = CustomSessionFactory.getInstance().getCurrentSession();
+		session.beginTransaction();
+		List<FImage> basisImages = session.createQuery("from FaceEntity s where s.getSettings='something'")
+				.getResultList();
+		EigenImages eigenModel = faceRecognition.learnFaces(basisImages);
+		
+		FImage face=faceRecognition.convertBufferedFImage(capturedFace);
+		
+		List<Double> distances = new ArrayList<>();
+		for (FImage faceInDatabse : basisImages) {
+			double distance=faceRecognition.recognize(eigenModel, face, faceInDatabse);
 			distances.add(distance);
 		}
-		if (Collections.min(distances)>15) {
+		if (Collections.max(distances) > 10) {
 			return true;
 		}
 		return false;
+		
 	}
 
 }
