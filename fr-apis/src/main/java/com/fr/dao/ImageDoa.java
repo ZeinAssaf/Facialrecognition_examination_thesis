@@ -1,19 +1,13 @@
 package com.fr.dao;
 
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.hamcrest.TypeSafeMatcher;
 import org.hibernate.Session;
-import org.netlib.util.doubleW;
-import org.openimaj.feature.DoubleFV;
-import org.openimaj.feature.DoubleFVComparison;
 import org.openimaj.image.FImage;
-import org.openimaj.image.ImageUtilities;
 import org.openimaj.image.model.EigenImages;
 
 import com.fr.facerecognition.FaceRecognition;
