@@ -91,18 +91,6 @@ public class DetectFaces {
 		cipher.init(Cipher.ENCRYPT_MODE, secretKey, parameterSpec);
 		return cipher.doFinal(encodedMessage.getBytes());
 	}
-
-	public String decryptAES(byte[] encrptedImage, SecretKey secretKey, byte[] initializationVector)
-			throws InvalidKeyException, InvalidAlgorithmParameterException, NoSuchAlgorithmException,
-			NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
-		final String AES_CIPHER = "AES/CBC/PKCS5Padding";
-		Cipher cipher = Cipher.getInstance(AES_CIPHER);
-		IvParameterSpec parameterSpec = new IvParameterSpec(initializationVector);
-		cipher.init(Cipher.DECRYPT_MODE, secretKey, parameterSpec);
-		byte[] s = cipher.doFinal(encrptedImage);
-		return new String(s);
-	}
-
 	public String convertImageToString(BufferedImage image) {
 		ByteArrayOutputStream arrayFace = new ByteArrayOutputStream();
 		try {
