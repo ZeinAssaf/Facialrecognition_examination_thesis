@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
+  th:include="fragments/layout :: page" lang="en" dir="ltr">
+<head>
+<title>Settings</title>
+</head>
+<body>
+  <div th:fragment="content">
+    <!--  -->
+    <!-- 
+Key
+
+Notification method
+  Add
+  Remove
+  
+Notification on exists or not
+
+Face
+  Add
+  Remove
+
+Change Password 
+-->
+    <h1>Settings</h1>
+
+    <div class="grid-x grid-padding-x">
+      <div class="large-4 cell"></div>
+      <div class="large-4 cell">
+
+        <label for="api-key">Api key: <input type="text" name="api-key" id="api-key" th:value="${settings.apiKey}" readonly></label>
+
+        <fieldset class="form-border">
+          <legend>Manage Faces</legend>
+          <form id="face-form">
+            <label>Faces: <select id="faces" th:disabled="${#lists.isEmpty(settings.faces)}">
+                <option th:each="face:${settings.faces}" th:text="${face.name}" th:id="${face.id}" th:value="${face.id}"></option>
+                <option th:if="${#lists.isEmpty(settings.faces)}">None</option>
+            </select>
+            </label>
+            <div class="button-group">
+              <a class="button" id="open-face-modal" data-open="add-face-modal">Create</a> <a id="remove-face" class="button error"
+                th:classappend="${#lists.isEmpty(settings.faces)} ? disabled">Remove</a>
+            </div>
+
+            <div class="reveal" id="add-face-modal" data-reveal>
+              <h1>Create Face</h1>
+              <label for="face-name">Name:<input type="text" name="face-name" id="face-name"></label> <a href="javascript:void(0)" class="button success float-right"
+                id="add-face">Add</a>
+              <p id="modal-error" class="error"></p>
+              <button class="close-button" data-close aria-label="Close modal" type="button">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+          </form>
+        </fieldset>
+        
+        <fieldset class="large-5 cell form-border">
+          <legend>Notification if face is</legend>
+          <input type="radio" name="notify-if" value="true" th:checked="${settings.notifyIfDetected == true}? true : false" id="notify-if-true" required> <label
+            for="notify-if-true">detected</label> <input type="radio" name="notify-if" value="false" th:checked="${settings.notifyIfDetected == true}? false : true"
+            id="notify-if-false"> <label for="notify-if-false">not detected</label> <label id="notifyIfStatus" class=""></label>
+        </fieldset>
+
+        <fieldset class="form-border">
+          <legend>Manage Notifications</legend>
+          <form id="notification-form">
+            <label>Notification methods: <select id="notification-methods" th:disabled="${#lists.isEmpty(settings.notifications)}">
+                <option th:each="notification:${settings.notifications}" th:text="${notification.type} + ' - ' + ${notification.name}" th:id="${notification.id}"
+                  th:value="${notification.id}"></option>
+                <option th:if="${#lists.isEmpty(settings.notifications)}">None</option>
+            </select>
+            </label>
+            <div class="button-group">
+              <a class="button" id="open-notification-modal" data-open="add-notification-modal">Create</a> <a id="remove-notification" class="button error"
+                th:classappend="${#lists.isEmpty(settings.notifications)} ? disabled">Remove</a>
+            </div>
+
+            <div class="reveal" id="add-notification-modal" data-reveal>
+              <h1>Create Notification</h1>
+              <label for="notification-method">Notification method:<select name="notification-method" id="notification-method">
+                  <option th:each="name : ${T(se.anderssonbilly.faceRecogSettings.dao.NotificationTypeEnum).values()}" th:value="${name}" th:text="${name}"></option>
+              </select>
+              </label> <label for="notification-name">Send to:<input type="text" name="notification-name" id="notification-name"></label> <a href="javascript:void(0)"
+                class="button success float-right" id="add-notification">Add</a>
+              <p id="modal-error" class="error"></p>
+              <button class="close-button" data-close aria-label="Close modal" type="button">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+          </form>
+        </fieldset>
+        
+      </div>
+      <div class="large-4 cell"></div>
+    </div>
+
+
+
+    <script type="text/javascript">
+          function r(f) {
+            /in/.test(document.readyState) ? setTimeout('r(' + f + ')', 9) : f()
+          }
+
+          r(function() {
+
+            ///////////////
+            // Variables //
+            ///////////////
+            //
+
+            var addFaceUrl = "/addFace";
+            var removeFaceUrl = "/removeFace";
+            var getFacesUrl = "/getFaces";
+            var updateNotifyIfUrl = "/updateNotifyIf";
+            var addNotificationUrl = "/addNotification";
+            var removeNotificationUrl = "/removeNotification";
+            var getNotificationsUrl = "/getNotifications";
+
+            //
+            ///////////////
+
+            ///////////////////////////////
+            // Adding and removing faces //
+            ///////////////////////////////
+            //
+
+            // Clear name text input when opening modal
+            $("#open-face-modal").on("click", function() {
+              $("#face-name").val("");
+            });
+
+            // Call ajax POST to add face to db
+            $("#add-face").on("click", function() {
+              if (!$(this).hasClass("disabled")) {
+                $(this).addClass("disabled");
+                ajaxPost(addFaceUrl, $("#face-name").val(), function(data) {
+                  $(".close-button").click();
+                  $("#face-name").val("");
+                  $("#add-face").removeClass("disabled");
+                  getFaces();
+                }, function(data) {
+                  $("#add-face").removeClass("disabled");
+                  $("#modal-error").text(data);
+                });
+              }
+            });
+
+            // Call ajax POST to remove face from db
+            $("#remove-face").on("click", function(data) {
+              if (!$(this).hasClass("disabled")) {
+                $(this).addClass("disabled");
+                ajaxPost(removeFaceUrl, $("#faces").val(), function() {
+                  getFaces();
+                }, function(data) {
+                  $("#remove-face").removeClass("disabled");
+                  $("#modal-error").text(data);
+                });
+              }
+            });
+
+            // Method to GET faces from db
+            var getFaces = function() {
+              console.log("loading");
+              ajaxGet(getFacesUrl, function(data) {
+                $("#faces").html("");
+                if (data.length > 0) {
+                  $("#faces").prop("disabled",false);
+                  $("#remove-face").removeClass("disabled");
+                  $.each(data, function(i, val) {
+                    $("#faces").append("<option id='" + val.id + "' value='" + val.id + "'>" + val.name + "</option>");
+                  });
+                } else {
+                  $("#faces").prop("disabled",true);
+                  $("#faces").append("<option>None</option>");
+                }
+              }, function(data) {
+                $("#modal-error").text(data);
+              });
+            }
+
+            //
+            ///////////////////////////////
+
+            ///////////////////
+            // Notifications //
+            ///////////////////
+            //
+
+            // Make Ajax POST when changing notify if
+            $("input[type=radio][name=notify-if]").on("change", function() {
+              console.log($(this).val());
+              ajaxPost(updateNotifyIfUrl, $(this).val(), function(data) {
+                $("#notifyIfStatus").removeClass("error").addClass("success").text("Change applied successfully");
+              }, function(data) {
+                $("#notifyIfStatus").removeClass("success").addClass("error").text("Error: " + data);
+              });
+            });
+
+            // Clear name text input when opening modal
+            $("#open-notification-modal").on("click", function() {
+              $("#notification-name").val("");
+            });
+
+            // Call ajax POST to add notification to db
+            $("#add-notification").on("click", function() {
+              if (!$(this).hasClass("disabled")) {
+                $(this).addClass("disabled");
+                var payload = {
+                  "type" : $("#notification-method").val(),
+                  "name" : $("#notification-name").val()
+                }
+                ajaxPost(addNotificationUrl, payload, function(data) {
+                  $(".close-button").click();
+                  $("#notification-name").val("");
+                  $("#add-notification").removeClass("disabled");
+                  getNotifications();
+                }, function(data) {
+                  $("#add-notification").removeClass("disabled");
+                  $("#modal-error").text(data);
+                });
+              }
+            });
+
+            // Call ajax POST to remove notification from db
+            $("#remove-notification").on("click", function(data) {
+              if (!$(this).hasClass("disabled")) {
+                $(this).addClass("disabled");
+                ajaxPost(removeNotificationUrl, $("#notification-methods").val(), function() {
+                  getNotifications();
+                }, function(data) {
+                  $("#remove-notification").removeClass("disabled");
+                  $("#modal-error").text(data);
+                });
+              }
+            });
+
+            // Method to GET notifications from db
+            var getNotifications = function() {
+              console.log("loading");
+              ajaxGet(getNotificationsUrl, function(data) {
+                $("#notification-methods").html("");
+                if (data.length > 0) {
+                  $("#notification-methods").prop("disabled",false);
+                  $("#remove-notification").removeClass("disabled");
+                  $.each(data, function(i, val) {
+                    $("#notification-methods").append(
+                        "<option id='" + val.id + "' value='" + val.id + "'>" + val.type + " - " + val.name
+                            + "</option>");
+                  });
+                } else {
+                  $("#notification-methods").prop("disabled",true);
+                  $("#notification-methods").append("<option>None</option>");
+                }
+              }, function(data) {
+                $("#modal-error").text(data);
+              });
+            }
+
+            //
+            ///////////////////
+
+            /////////////
+            // Methods //
+            /////////////
+            //
+
+            // ajaxPOST method
+            var ajaxPost = function(url, data, success, error) {
+              $("#modal-error").text();
+              $.ajax({
+                type : "POST",
+                contentType : "application/json",
+                url : url,
+                data : JSON.stringify(data),
+                timeout : 500000,
+                success : function(data) {
+                  success(data);
+                },
+                error : function(e) {
+                  error(e);
+                }
+              })
+            }
+
+            // ajaxGET method
+            var ajaxGet = function(url, success, error) {
+              $("#modal-error").text();
+              $.ajax({
+                type : "GET",
+                contentType : "application/json",
+                url : url,
+                dataType : 'json',
+                timeout : 500000,
+                success : function(data) {
+                  success(data);
+                },
+                error : function(e) {
+                  error(e);
+                }
+              })
+            }
+
+            //
+            /////////////
+          });
+        </script>
+
+    <!--  -->
+  </div>
+</body>
+</html>
