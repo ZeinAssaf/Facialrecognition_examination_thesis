@@ -125,7 +125,7 @@ public class SettingsController {
 
 		Set<NotificationEntity> notifications = userService.findByUsername(securityService.findLoggedInUsername()).getSettings()
 				.getNotifications();
-
+		
 		return new ResponseEntity<>(notifications, HttpStatus.OK);
 	}
 }

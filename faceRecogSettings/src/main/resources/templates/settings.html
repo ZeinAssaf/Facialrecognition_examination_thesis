@@ -28,6 +28,8 @@ Change Password
       <div class="large-4 cell"></div>
       <div class="large-4 cell">
 
+        <p class="lead error text-center error-message" id="get-error"></p>
+
         <label for="api-key">Api key: <input type="text" name="api-key" id="api-key" th:value="${settings.apiKey}" readonly></label>
 
         <fieldset class="form-border">
@@ -41,13 +43,15 @@ Change Password
             <div class="button-group">
               <a class="button" id="open-face-modal" data-open="add-face-modal">Create</a> <a id="remove-face" class="button error"
                 th:classappend="${#lists.isEmpty(settings.faces)} ? disabled">Remove</a>
+              <p class="error error-message" id="face-error"></p>
             </div>
+
 
             <div class="reveal" id="add-face-modal" data-reveal>
               <h1>Create Face</h1>
-              <label for="face-name">Name:<input type="text" name="face-name" id="face-name"></label> <a href="javascript:void(0)" class="button success float-right"
-                id="add-face">Add</a>
-              <p class="modal-error error"></p>
+              <label for="face-name">Name:<input type="text" name="face-name" id="face-name"></label> <a href="javascript:void(0)"
+                class="button success float-right" id="add-face">Add</a>
+              <p class="modal-error error error-message"></p>
               <button class="close-button" data-close aria-label="Close modal" type="button">
                 <span aria-hidden="true">&times;</span>
               </button>
@@ -57,30 +61,35 @@ Change Password
 
         <fieldset class="large-5 cell form-border">
           <legend>Notification if face is</legend>
-          <input type="radio" name="notify-if" value="true" th:checked="${settings.notifyIfDetected == true}? true : false" id="notify-if-true" required> <label
-            for="notify-if-true">detected</label> <input type="radio" name="notify-if" value="false" th:checked="${settings.notifyIfDetected == true}? false : true"
-            id="notify-if-false"> <label for="notify-if-false">not detected</label> <label id="notifyIfStatus" class=""></label>
+          <input type="radio" name="notify-if" value="true" th:checked="${settings.notifyIfDetected == true}? true : false" id="notify-if-true"
+            required> <label for="notify-if-true">detected</label> <input type="radio" name="notify-if" value="false"
+            th:checked="${settings.notifyIfDetected == true}? false : true" id="notify-if-false"> <label for="notify-if-false">not
+            detected</label> <label id="notifyIfStatus" class=""></label>
         </fieldset>
 
         <fieldset class="form-border">
           <legend>Manage Notifications</legend>
           <form id="notification-form">
 
-            <div th:each="name : ${T(se.anderssonbilly.faceRecogSettings.dao.NotificationTypeEnum).values()}" th:id="'notification-method-' + ${name} + 'container'">
+            <div th:each="name : ${T(se.anderssonbilly.faceRecogSettings.dao.NotificationTypeEnum).values()}"
+              th:id="'notification-method-' + ${name} + 'container'">
               <label><span th:text="${name}"></span> <select th:id="'notification-method-' + ${name}">
               </select> </label>
               <div class="button-group">
                 <a class="button open-notification-modal" th:data-notification-type="${name}" data-open="add-notification-modal">Create</a> <a
-                  class="remove-notification button error" th:data-notification-type="${name}" th:classappend="${#lists.isEmpty(settings.notifications)} ? disabled">Remove</a>
+                  class="remove-notification button error" th:data-notification-type="${name}"
+                  th:classappend="${#lists.isEmpty(settings.notifications)} ? disabled">Remove</a>
+                <p class="error error-message" th:id="${name} + '-error'"></p>
               </div>
+
               <hr>
             </div>
 
             <div class="reveal" id="add-notification-modal" data-reveal>
               <h1>Create Notification</h1>
-              <label for="notification-name"><span id="notification-text">Send to:</span><input type="text" name="notification-name" id="notification-name"></label> <a
-                href="javascript:void(0)" class="button success float-right" id="add-notification">Add</a>
-              <p class="modal-error error"></p>
+              <label for="notification-name"><span id="notification-text">Send to:</span><input type="text" name="notification-name"
+                id="notification-name"></label> <a href="javascript:void(0)" class="button success float-right" id="add-notification">Add</a>
+              <p class="modal-error error error-message"></p>
               <button class="close-button" data-close aria-label="Close modal" type="button">
                 <span aria-hidden="true">&times;</span>
               </button>
@@ -139,7 +148,7 @@ Change Password
             // Clear name text input when opening modal
             $("#open-face-modal").on("click", function() {
               $("#face-name").val("");
-              $(".modal-error").text("");
+              $(".error-message").text("");
             });
 
             // Call ajax POST to add face to db
@@ -161,21 +170,22 @@ Change Password
             // Call ajax POST to remove face from db
             $("#remove-face").on("click", function(data) {
               if (!$(this).hasClass("disabled")) {
-                $(this).addClass("disabled");
-                ajaxPost(removeFaceUrl, $("#faces").val(), function() {
-                  getFaces();
-                }, function(data) {
-                  $("#remove-face").removeClass("disabled");
-              	 // TODO separate do you accept modal
-              	 // TODO Error outside of modal
-                  $(".modal-error").text(data.responseText);
+                
+                confirm("Delete face?",$("#faces option:selected").text(), function() {
+                  $(this).addClass("disabled");
+                  ajaxPost(removeFaceUrl, $("#faces").val(), function() {
+                    getFaces();
+                  }, function(data) {
+                    $("#remove-face").removeClass("disabled");
+                    $("#face-error").text(data.responseText);
+                  });
                 });
+                
               }
             });
 
             // Method to GET faces from db
             var getFaces = function() {
-              console.log("loading");
               ajaxGet(getFacesUrl, function(data) {
                 $("#faces").html("");
                 if (data.length > 0) {
@@ -189,9 +199,7 @@ Change Password
                   $("#faces").append("<option>None</option>");
                 }
               }, function(data) {
-                //TODO error handling
-                // TODO error outside of modal
-                $(".modal-error").text(data.responseText);
+                $("#get-error").append("\nCould not get Faces.");
               });
             }
 
@@ -205,7 +213,6 @@ Change Password
             
             // Make Ajax POST when changing notify if
             $("input[type=radio][name=notify-if]").on("change", function() {
-              console.log($(this).val());
               ajaxPost(updateNotifyIfUrl, $(this).val(), function(data) {
                 $("#notifyIfStatus").removeClass("error").addClass("success").text("Change applied successfully");
               }, function(data) {
@@ -217,11 +224,11 @@ Change Password
             $(".open-notification-modal").on("click", function() {
               var type = $(this).data("notification-type");
               $("#notification-name").val("").attr("data-notification-type",$(this).data("notification-type"));
-              $(".modal-error").text("");
+              $(".error-message").text("");
               
               switch(type){
               case "email":
-                $("#notification-text").html("Email to recieve notifications:");
+                $("#notification-text").html("Email to recieve notifications:");  
                 $("#notification-name").unbind("input keydown keyup mousedown mouseup select contextmenu drop");
                 $("#notification-name").inputFilter(function(value) {
                   return /^[^ ]*$/i.test(value)
@@ -263,30 +270,30 @@ Change Password
             // Call ajax POST to remove notification from db
             $(".remove-notification").on("click", function(data) {
               var removeButton = $(this);
-              if (!$(this).hasClass("disabled")) {
-                $(this).addClass("disabled");
-                console.log("2");
-                ajaxPost(removeNotificationUrl, $("#notification-method-" + $(this).data("notification-type")).val(), function() {
-                  getNotifications();
-                }, function(data) {
-                  removeButton.removeClass("disabled");
-                  // TODO separate do you accept modal
-                  // TODO Error outside of modal
-                  $(".modal-error").text(data.responseText);
+              
+              if (!removeButton.hasClass("disabled")) {  
+                var element = "#notification-method-" + removeButton.data("notification-type");
+                confirm("Delete " + removeButton.data("notification-type") + " notification?",$(element + " option:selected").text(), function() {
+                  removeButton.addClass("disabled");
+                  ajaxPost(removeNotificationUrl, $(element).val(), function() {
+                    getNotifications();
+                  }, function(data) {
+                    removeButton.removeClass("disabled");
+                    $("#" + removeButton.data("notification-type") + "-error").text(data.responseText);
+                  });
+                
                 });
+                
               }
             });
 
             // Method to GET notifications from db
             var getNotifications = function() {
-              console.log("loading");
               ajaxGet(getNotificationsUrl, function(data) {
                 notifications = data;
                 displayNotifications();
               }, function(data) {
-                //TODO error handling
-                // TODO error outside of modal
-                $(".modal-error").text(data.responseText);
+                $("#get-error").append("\nCould not get notifications.");
               });
             }
             
@@ -310,7 +317,8 @@ Change Password
 
             // ajaxPOST method
             var ajaxPost = function(url, data, success, error) {
-              $(".modal-error").text();
+              $(".error-message").text("");
+              $("#notifyIfStatus").text("");
               $.ajax({
                 type : "POST",
                 contentType : "application/json",
@@ -328,7 +336,8 @@ Change Password
 
             // ajaxGET method
             var ajaxGet = function(url, success, error) {
-              $(".modal-error").text();
+              $(".error-message").text("");
+              $("#notifyIfStatus").text("");
               $.ajax({
                 type : "GET",
                 contentType : "application/json",
@@ -344,20 +353,43 @@ Change Password
               })
             }
             
-         // Restricts input for each element in the set of matched elements to the given inputFilter.
-          $.fn.inputFilter = function(inputFilter) {
-            return this.on("input keydown keyup mousedown mouseup select contextmenu drop", function() {
-              if (inputFilter(this.value)) {
-                this.oldValue = this.value;
-                this.oldSelectionStart = this.selectionStart;
-                this.oldSelectionEnd = this.selectionEnd;
-              } else if (this.hasOwnProperty("oldValue")) {
-                this.value = this.oldValue;
-                this.setSelectionRange(this.oldSelectionStart, this.oldSelectionEnd);
-              }
-            });
-          };
-                  
+           // Restricts input for each element in the set of matched elements to the given inputFilter.
+            $.fn.inputFilter = function(inputFilter) {
+              return this.on("input keydown keyup mousedown mouseup select contextmenu drop", function() {
+                if (inputFilter(this.value)) {
+                  this.oldValue = this.value;
+                  this.oldSelectionStart = this.selectionStart;
+                  this.oldSelectionEnd = this.selectionEnd;
+                } else if (this.hasOwnProperty("oldValue")) {
+                  this.value = this.oldValue;
+                  this.setSelectionRange(this.oldSelectionStart, this.oldSelectionEnd);
+                }
+              });
+            };
+             
+          	// Create confirmation modal
+        	function confirm(title, message, callback) {
+          		var modal = '<div class="reveal small" id="confirmation">'+
+          			     		'<h2>'+title+'</h2>'+
+          			   		'<p class="lead">'+message+'</p>'+
+                   			'<button class="button success yes">Yes</button>'+
+          			    		'<button class="button alert float-right" data-close>No</button>'+
+          		       		'</div>';
+          		$('body').append(modal);
+          		var confirmation = new Foundation.Reveal($('#confirmation'));
+          		confirmation.open();
+              
+          		$('#confirmation').children('.yes').on('click', function() {
+          			confirmation.close();
+          			$('#confirmation').remove();
+                	callback.call();
+              	});
+          		$(document).on('closed.zf.reveal', '#confirmation', function() {
+          			$('#confirmation').remove();
+          		});
+  
+   	 		}
+          
             //
             /////////////
           });
