@@ -18,6 +18,7 @@ import se.anderssonbilly.faceRecogSettings.dao.NotificationRepository;
 import se.anderssonbilly.faceRecogSettings.dao.NotificationTypeEnum;
 import se.anderssonbilly.faceRecogSettings.dao.SettingsEntity;
 import se.anderssonbilly.faceRecogSettings.dao.SettingsRepository;
+import se.anderssonbilly.faceRecogSettings.model.FaceDto;
 import se.anderssonbilly.faceRecogSettings.model.NotificationDto;
 import se.anderssonbilly.faceRecogSettings.service.SecurityServiceImpl;
 import se.anderssonbilly.faceRecogSettings.service.UserServiceImpl;
@@ -46,17 +47,25 @@ public class SettingsController {
 	}
 
 	@RequestMapping(value = "/addFace", method = RequestMethod.POST)
-	public ResponseEntity<String> addFace(@RequestBody String name) {
+	public ResponseEntity<String> addFace(@RequestBody FaceDto faceDto) {
 
-		System.out.println("Adding face with name: " + name);
-
-		// TODO validate input
-		FaceEntity face = new FaceEntity();
-		face.setName(name);
-		face.setSettings(userService.findByUsername(securityService.findLoggedInUsername()).getSettings());
-		faceRepository.save(face);
-
-		return new ResponseEntity<>("responseText", HttpStatus.OK);
+		System.out.println("Adding face with name: " + faceDto.getName());
+		faceDto.trimName();
+		
+		if(faceDto.getName() != null && !faceDto.getName().isEmpty()) {
+			SettingsEntity settings = userService.findByUsername(securityService.findLoggedInUsername()).getSettings();
+			if(faceRepository.findByNameAndSettingsId(faceDto.getName(), settings.getId()) == null) {
+				FaceEntity face = new FaceEntity();
+				face.setName(faceDto.getName());
+				face.setSettings(settings);
+				faceRepository.save(face);	
+				return new ResponseEntity<>("Success: Name added successfully", HttpStatus.OK);
+			}else {
+				return new ResponseEntity<>("Error: Name already exsists", HttpStatus.CONFLICT);
+			}
+		}else {
+			return new ResponseEntity<>("Error: Name can't be empty", HttpStatus.LENGTH_REQUIRED);	
+		}
 	}
 
 	@RequestMapping(value = "/removeFace", method = RequestMethod.POST)

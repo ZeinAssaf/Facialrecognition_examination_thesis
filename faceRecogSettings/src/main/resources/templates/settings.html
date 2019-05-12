@@ -155,14 +155,14 @@ Change Password
             $("#add-face").on("click", function() {
               if (!$(this).hasClass("disabled")) {
                 $(this).addClass("disabled");
-                ajaxPost(addFaceUrl, $("#face-name").val(), function(data) {
+                ajaxPost(addFaceUrl, {"name":$("#face-name").val()}, function(data) {
                   $(".close-button").click();
                   $("#face-name").val("");
                   $("#add-face").removeClass("disabled");
                   getFaces();
                 }, function(data) {
                   $("#add-face").removeClass("disabled");
-                  $(".modal-error").text(data);
+                  $(".modal-error").text(data.responseText);
                 });
               }
             });

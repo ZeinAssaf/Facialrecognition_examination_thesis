@@ -16,6 +16,7 @@ import se.anderssonbilly.faceRecogSettings.dao.UserRepository;
 
 @Service
 public class UserServiceImpl implements IUserService{
+	
     @Autowired
     private UserRepository userRepository;
     @Autowired

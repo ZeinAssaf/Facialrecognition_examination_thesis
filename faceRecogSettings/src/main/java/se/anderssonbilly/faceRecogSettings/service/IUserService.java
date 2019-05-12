@@ -6,4 +6,5 @@ public interface IUserService {
 	void save(UserEntity user);
 
 	UserEntity findByUsername(String username);
+	
 }
