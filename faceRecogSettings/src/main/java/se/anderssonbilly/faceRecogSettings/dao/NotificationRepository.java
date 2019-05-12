@@ -5,4 +5,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface NotificationRepository  extends JpaRepository<NotificationEntity, Long>{
+	FaceEntity findByNameAndSettingsId(String name, Long id);
+	boolean existsById(Long id);
 }

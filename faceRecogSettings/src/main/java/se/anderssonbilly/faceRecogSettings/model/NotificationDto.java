@@ -5,7 +5,11 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class NotificationDto {
+public class NotificationDto{
 	private String type;
 	private String name;
+	
+	public void trimName() {
+		this.name = this.name.trim();
+	}
 }

@@ -13,7 +13,7 @@ import se.anderssonbilly.faceRecogSettings.validation.PasswordMatches;
 @Getter
 @Setter
 @PasswordMatches
-public class UserDto {
+public class UserDto{
 
 	@Size(min = 4, max = 12, message = "Username size must be 4-12")
 	@NotNull(message = "")

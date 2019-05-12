@@ -9,4 +9,5 @@ import org.springframework.stereotype.Repository;
 public interface FaceRepository  extends JpaRepository<FaceEntity, Long>{
 	List<FaceEntity> findBySettingsId(Long id);
 	FaceEntity findByNameAndSettingsId(String name, Long id);
+	boolean existsById(Long id);
 }
