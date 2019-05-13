@@ -21,6 +21,7 @@ import javax.imageio.ImageIO;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
 import org.openimaj.image.FImage;
@@ -69,9 +70,9 @@ public class DetectFaces {
 					for (KEDetectedFace face : faces) {
 						aligner.align(face);
 						faceCapture = face.getFacePatch();
-						BufferedImage asd = ImageUtilities.createBufferedImageForDisplay(faceCapture, null);
-						asd = resize(asd);
-						ImageIO.write(asd, "jpg", new File("C:/Users/Zein/Desktop/new.jpg"));
+						BufferedImage faceCaptureInBuffer=ImageUtilities.createBufferedImage(faceCapture);
+						faceCaptureInBuffer = resize(faceCaptureInBuffer);
+						ImageIO.write(faceCaptureInBuffer, "jpg", new File("C:/Users/Zein/Desktop/new.jpg"));
 						frame.drawShape(face.getBounds(), RGBColour.RED);
 					}
 
@@ -91,6 +92,7 @@ public class DetectFaces {
 		cipher.init(Cipher.ENCRYPT_MODE, secretKey, parameterSpec);
 		return cipher.doFinal(encodedMessage.getBytes());
 	}
+
 	public String convertImageToString(BufferedImage image) {
 		ByteArrayOutputStream arrayFace = new ByteArrayOutputStream();
 		try {
@@ -111,7 +113,7 @@ public class DetectFaces {
 
 		g.drawImage(input, 0, 0, 89, 114, null);
 		g.dispose();
-		ImageIO.write(output, "jpg", new File("C:/Users/Zein/Desktop/resizedFaces/face.jpg"));
+		//ImageIO.write(output, "jpg", new File("C:/Users/Zein/Desktop/resizedFaces/face.jpg"));
 		return output;
 
 	}
@@ -119,7 +121,11 @@ public class DetectFaces {
 	public void postImage(String targetURL, String encodedImage) {
 		try {
 			Client client = ClientBuilder.newClient();
-			Response response = client.target(targetURL).request().post(Entity.json(encodedImage));
+			WebTarget target = client.target(targetURL).path("{API_KEY}");
+			Response response = target
+					.resolveTemplate("API_KEY", "12345678")
+					.request()
+					.post(Entity.json(encodedImage));
 
 			// TODO to be removed later
 			System.out.println(response);
