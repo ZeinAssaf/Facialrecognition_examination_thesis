@@ -28,7 +28,6 @@ import org.openimaj.image.processing.face.alignment.AffineAligner;
 import org.openimaj.image.processing.face.detection.FaceDetector;
 import org.openimaj.image.processing.face.detection.keypoints.FKEFaceDetector;
 import org.openimaj.image.processing.face.detection.keypoints.KEDetectedFace;
-import org.openimaj.image.typography.FontStyle;
 import org.openimaj.image.typography.hershey.HersheyFont;
 import org.openimaj.video.Video;
 import org.openimaj.video.VideoDisplay;
