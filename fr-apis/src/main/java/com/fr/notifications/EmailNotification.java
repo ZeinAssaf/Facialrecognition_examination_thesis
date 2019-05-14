@@ -1,42 +1,39 @@
 package com.fr.notifications;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.io.IOException;
 
-import com.mailjet.client.ClientOptions;
-import com.mailjet.client.MailjetClient;
-import com.mailjet.client.MailjetRequest;
-import com.mailjet.client.MailjetResponse;
-import com.mailjet.client.errors.MailjetException;
-import com.mailjet.client.errors.MailjetSocketTimeoutException;
-import com.mailjet.client.resource.Emailv31;
+import com.sendgrid.Content;
+import com.sendgrid.Email;
+import com.sendgrid.Mail;
+import com.sendgrid.Method;
+import com.sendgrid.Request;
+import com.sendgrid.Response;
+import com.sendgrid.SendGrid;
 
 public class EmailNotification implements Notification{
 	@Override
 	public void notifyUser(String emailReciever,String textMessage) {
-		MailjetClient client = new MailjetClient(System.getenv("MAILJET_API_KEY_PUBLIC"), System.getenv("MAILJET_API_KEY_PRIVATE"),
-				new ClientOptions("v3.1"));
-		MailjetRequest request = new MailjetRequest(Emailv31.resource)
-				.property(Emailv31.MESSAGES,
-						new JSONArray().put(new JSONObject()
-								.put(Emailv31.Message.FROM,
-										new JSONObject().put("Email", "for.work1@outlook.com").put("Name",
-												"Zein and Billy"))
-								.put(Emailv31.Message.TO,
-										new JSONArray().put(new JSONObject().put("Email", emailReciever).put("Name",
-												emailReciever)))
-								.put(Emailv31.Message.SUBJECT, "Unautherized access detected")
-								.put(Emailv31.Message.TEXTPART, "warning").put(Emailv31.Message.HTMLPART,
-										textMessage)));
-		try {
-			MailjetResponse response = client.post(request);
-			System.out.println(response.getStatus());
-		} catch (MailjetException e) {
-			e.printStackTrace();
-		} catch (MailjetSocketTimeoutException e) {
-			
-			e.printStackTrace();
-		}
+
+	    Email from = new Email("test@example.com");
+	    String subject = "Warning";
+	    Email to = new Email(emailReciever);
+	    Content content = new Content("text/plain", textMessage);
+	    Mail mail = new Mail(from, subject, to, content);
+
+	    SendGrid sg = new SendGrid(System.getenv("SENDGRID_API"));
+	    Request request = new Request();
+	    try {
+	      request.setMethod(Method.POST);
+	      request.setEndpoint("mail/send");
+	      request.setBody(mail.build());
+	      Response response = sg.api(request);
+	      System.out.println(response.getStatusCode());
+	      System.out.println(response.getBody());
+	      System.out.println(response.getHeaders());
+	    } catch (IOException ex) {
+	      ex.printStackTrace();
+	    }
+	  
 	}
 
 }

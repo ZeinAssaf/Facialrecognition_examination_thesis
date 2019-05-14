@@ -96,24 +96,18 @@
 			<artifactId>twilio</artifactId>
 			<version>7.37.4</version>
 		</dependency>
-
-		<!-- mailjet library -->
-
-		<dependency>
-			<groupId>com.mailjet</groupId>
-			<artifactId>mailjet-client</artifactId>
-			<version>4.2.0</version>
-		</dependency>
 		<!-- https://mvnrepository.com/artifact/joda-time/joda-time -->
 		<dependency>
 			<groupId>joda-time</groupId>
 			<artifactId>joda-time</artifactId>
 			<version>2.1</version>
 		</dependency>
-
-
-
-
+		<!-- https://mvnrepository.com/artifact/com.sendgrid/sendgrid-java -->
+		<dependency>
+			<groupId>com.sendgrid</groupId>
+			<artifactId>sendgrid-java</artifactId>
+			<version>4.3.0</version>
+		</dependency>
 	</dependencies>
 
 	<repositories>
