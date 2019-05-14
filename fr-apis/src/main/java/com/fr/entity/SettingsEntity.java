@@ -1,6 +1,5 @@
 package com.fr.entity;
 
-
 import java.util.Set;
 
 import javax.persistence.Column;
@@ -31,18 +30,18 @@ public class SettingsEntity {
 	private UserEntity user;
 
 	private Long recognitonId = (long) 0;
-	
+
 	private Set<FaceEntity> faces;
 
 	private Set<NotificationEntity> notifications;
 
 	private boolean notifyIfDetected = true;
-	
+
 	@OneToOne(mappedBy = "settings")
 	public UserEntity getUser() {
 		return user;
 	}
-	
+
 	@OneToMany(mappedBy = "settings")
 	public Set<FaceEntity> getFaces() {
 		return faces;
@@ -52,7 +51,7 @@ public class SettingsEntity {
 	public Set<NotificationEntity> getNotifications() {
 		return notifications;
 	}
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	public Long getId() {

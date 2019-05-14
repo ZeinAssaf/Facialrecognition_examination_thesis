@@ -1,23 +1,17 @@
 package com.fr.resources;
 
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 
-import javax.imageio.ImageIO;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.openimaj.image.FImage;
-import org.openimaj.image.ImageUtilities;
-
-import com.fr.helper.FrHelper;
 import com.fr.services.FrService;
 
 @Path("/image")
@@ -32,20 +26,11 @@ public class ImageResource {
 	}
 
 	@POST
+	@Path("/{API_KEY}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response recieveCapturedFace(String code) throws IOException {
-		FrHelper helper = new FrHelper();
-		BufferedImage image = helper.decodeImage(code);
-		FImage image2=new FImage(89, 114);
-		image2=ImageUtilities.assignBufferedImage(image, image2);
-		ImageUtilities.write(image2, new File("C:/Users/Zein/Desktop/mmmm.png"));
-		
-		if (frService.handleImage(code)) {
-			return Response.status(Status.OK).build();
-		}
-
-		return Response.status(Status.BAD_REQUEST).build();
-
+	public Response recieveCapturedFace(@PathParam("API_KEY") String api_key, String code) throws IOException {
+		frService.handleImage(api_key, code);
+		return Response.status(Status.OK).build();
 	}
 
 }

@@ -11,8 +11,9 @@ import com.mailjet.client.errors.MailjetException;
 import com.mailjet.client.errors.MailjetSocketTimeoutException;
 import com.mailjet.client.resource.Emailv31;
 
-public class EmailNotification {
-	public void notifyUser(String emailReciever) {
+public class EmailNotification implements Notification{
+	@Override
+	public void notifyUser(String emailReciever,String textMessage) {
 		MailjetClient client = new MailjetClient(System.getenv("MAILJET_API_KEY_PUBLIC"), System.getenv("MAILJET_API_KEY_PRIVATE"),
 				new ClientOptions("v3.1"));
 		MailjetRequest request = new MailjetRequest(Emailv31.resource)
@@ -26,7 +27,7 @@ public class EmailNotification {
 												emailReciever)))
 								.put(Emailv31.Message.SUBJECT, "Unautherized access detected")
 								.put(Emailv31.Message.TEXTPART, "warning").put(Emailv31.Message.HTMLPART,
-										"Someone with a weird face has entered to the place you told them not to")));
+										textMessage)));
 		try {
 			MailjetResponse response = client.post(request);
 			System.out.println(response.getStatus());
