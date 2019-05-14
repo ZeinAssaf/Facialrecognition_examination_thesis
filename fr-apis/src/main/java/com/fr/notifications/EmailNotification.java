@@ -14,7 +14,7 @@ public class EmailNotification implements Notification{
 	@Override
 	public void notifyUser(String emailReciever,String textMessage) {
 
-	    Email from = new Email("test@example.com");
+	    Email from = new Email("warning@ZeinAndBilly.com");
 	    String subject = "Warning";
 	    Email to = new Email(emailReciever);
 	    Content content = new Content("text/plain", textMessage);
