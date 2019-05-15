@@ -8,17 +8,17 @@ import javax.imageio.ImageIO;
 
 import org.openimaj.video.capture.VideoCaptureException;
 
+
 public class App {
 	public static void main(String[] args) {
 
 		DetectFaces detector = new DetectFaces();
-		String targeturl = "http://localhost:8080/fr-apis/api/image";
-		
+		String targeturl = "http://localhost:8080/facial-recognition-api/api/face/";
 
 		try {
 			detector.detectFace();
-			while(true) {
-				BufferedImage face = ImageIO.read(new File("C:/Users/Zein/Desktop/new.jpg"));
+			while (true) {
+				BufferedImage face = ImageIO.read(new File("C:/Users/Zein/Desktop/new.png"));
 				String encodedImage = detector.convertImageToString(face);
 				detector.postImage(targeturl, encodedImage);
 				Thread.sleep(5000);
@@ -29,7 +29,6 @@ public class App {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

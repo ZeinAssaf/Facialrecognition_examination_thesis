@@ -72,7 +72,7 @@ public class DetectFaces {
 						faceCapture = face.getFacePatch();
 						BufferedImage faceCaptureInBuffer=ImageUtilities.createBufferedImage(faceCapture);
 						faceCaptureInBuffer = resize(faceCaptureInBuffer);
-						ImageIO.write(faceCaptureInBuffer, "jpg", new File("C:/Users/Zein/Desktop/new.jpg"));
+						ImageIO.write(faceCaptureInBuffer, "png", new File("C:/Users/Zein/Desktop/new.png"));
 						frame.drawShape(face.getBounds(), RGBColour.RED);
 					}
 
@@ -113,7 +113,6 @@ public class DetectFaces {
 
 		g.drawImage(input, 0, 0, 89, 114, null);
 		g.dispose();
-		//ImageIO.write(output, "jpg", new File("C:/Users/Zein/Desktop/resizedFaces/face.jpg"));
 		return output;
 
 	}
@@ -123,7 +122,7 @@ public class DetectFaces {
 			Client client = ClientBuilder.newClient();
 			WebTarget target = client.target(targetURL).path("{API_KEY}");
 			Response response = target
-					.resolveTemplate("API_KEY", "12345678")
+					.resolveTemplate("API_KEY", "123")
 					.request()
 					.post(Entity.json(encodedImage));
 
