@@ -17,47 +17,35 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Autowired
-    private UserDetailsService userDetailsService;
-	
+	private UserDetailsService userDetailsService;
+
 	@Bean
 	public BCryptPasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
-	
+
 	@Bean(name = BeanIds.AUTHENTICATION_MANAGER)
-	   @Override
-	   public AuthenticationManager authenticationManagerBean() throws Exception {
-	       return super.authenticationManagerBean();
+	@Override
+	public AuthenticationManager authenticationManagerBean() throws Exception {
+		return super.authenticationManagerBean();
 	}
-	
+
 	@Autowired
 	public void configureGlobal(AuthenticationManagerBuilder authenticationMgr) throws Exception {
-        authenticationMgr.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+		authenticationMgr.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
 	}
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http.authorizeRequests()
-				.antMatchers(
-						"/", "/home", "/settings", "/register", "/login", "/addFace", "/removeFace", "/getFaces", "/updateNotifyIf", "/addNotification", "/removeNotification", "/getNotifications", "/css/**", "/js/**", "/img/**")
-					.permitAll()
-					.anyRequest()
-					.hasAnyRole("ADMIN","USER")
-				.antMatchers("/admin")
-					.hasRole("ADMIN")
-				.antMatchers("/settings", "/addFace", "/removeFace", "/getFaces", "/updateNotifyIf","/addNotification", "/removeNotification", "/getNotifications")
-					.authenticated()
-					.and()
-				.formLogin()
-				.loginPage("/login")
-					.permitAll()
-					.defaultSuccessUrl("/settings")
-					.and()
-				.logout()
-					.permitAll()
-					.logoutSuccessUrl("/login")
-					.and()
-				.httpBasic();
+				.antMatchers("/", "/home", "/settings", "/register", "/login", "/addFace", "/removeFace", "/getFaces",
+						"/updateNotifyIf", "/addNotification", "/removeNotification", "/getNotifications", "/learnFace", "/changePassword",
+						"/css/**", "/js/**", "/img/**")
+				.permitAll().anyRequest().hasAnyRole("ADMIN", "USER").antMatchers("/admin").hasRole("ADMIN")
+				.antMatchers("/settings", "/addFace", "/removeFace", "/getFaces", "/updateNotifyIf", "/addNotification",
+						"/removeNotification", "/getNotifications", "/learnFace", "/changePassword")
+				.authenticated().and().formLogin().loginPage("/login").permitAll().defaultSuccessUrl("/settings").and()
+				.logout().permitAll().logoutSuccessUrl("/login").and().httpBasic();
 		http.exceptionHandling().accessDeniedPage("/error");
 		http.csrf().disable();
 	}

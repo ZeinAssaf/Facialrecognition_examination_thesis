@@ -1,3 +1,7 @@
+body{
+	padding-bottom: 1.5em;
+}
+
 .form-border {
 	border: 1px solid #cacaca;
 	padding: 1rem;

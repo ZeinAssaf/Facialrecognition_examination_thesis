@@ -3,7 +3,7 @@ package se.anderssonbilly.faceRecogSettings.validation;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-import se.anderssonbilly.faceRecogSettings.model.UserDto;
+import se.anderssonbilly.faceRecogSettings.model.PasswordValidation;
 
 
 public class PasswordMatchesValidator implements ConstraintValidator<PasswordMatches, Object> {
@@ -14,9 +14,9 @@ public class PasswordMatchesValidator implements ConstraintValidator<PasswordMat
 
 	@Override
 	public boolean isValid(Object obj, ConstraintValidatorContext context) {
-		UserDto user = (UserDto) obj;
-		return (user.getPassword().length() > 0 && user.getMatchingPassword().length() > 0)
-				? user.getPassword().equals(user.getMatchingPassword())
+		PasswordValidation validate = (PasswordValidation) obj;
+		return (validate.getPassword().length() > 0 && validate.getMatchingPassword().length() > 0)
+				? validate.getPassword().equals(validate.getMatchingPassword())
 				: false;
 
 	}

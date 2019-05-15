@@ -13,7 +13,7 @@ import se.anderssonbilly.faceRecogSettings.validation.PasswordMatches;
 @Getter
 @Setter
 @PasswordMatches
-public class UserDto{
+public class UserDto extends PasswordValidation{
 
 	@Size(min = 4, max = 12, message = "Username size must be 4-12")
 	@NotNull(message = "")
@@ -22,11 +22,5 @@ public class UserDto{
 	@NotEmpty(message = "Username must not be empty")
 	private String username;
 
-	@Size(min = 6, max = 16, message = "Password size must be 6-16")
-	@Pattern(regexp = "^(?:(?=.*?[A-Z])(?:(?=.*?[0-9])(?=.*?[-!@#$%^&*()_[\\\\]{},.<>+=])|(?=.*?[a-z])(?:(?=.*?[0-9])|(?=.*?[-!@#$%^&*()_[\\\\]{},.<>+=])))|(?=.*?[a-z])(?=.*?[0-9])(?=.*?[-!@#$%^&*()_[\\\\]{},.<>+=]))[A-Za-z0-9!@#$%^&*()_[\\\\]{},.<>+=-]{6,16}$", message = "Password must contain one digit, one lowercase and one uppercase letter")
-	@NotNull(message = "")
-	@NotBlank(message = "")
-	@NotEmpty(message = "Password must not be empty")
-	private String password;
-	private String matchingPassword;
+
 }

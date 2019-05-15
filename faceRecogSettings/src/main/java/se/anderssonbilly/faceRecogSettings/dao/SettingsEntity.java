@@ -29,7 +29,7 @@ public class SettingsEntity {
 
 	private UserEntity user;
 
-	private Long recognitonId = (long) 0;
+	private Long recognitionId = (long) 0;
 	
 	private Set<FaceEntity> faces;
 

@@ -2,11 +2,16 @@ package se.anderssonbilly.faceRecogSettings.controller;
 
 import java.util.Set;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -18,8 +23,10 @@ import se.anderssonbilly.faceRecogSettings.dao.NotificationRepository;
 import se.anderssonbilly.faceRecogSettings.dao.NotificationTypeEnum;
 import se.anderssonbilly.faceRecogSettings.dao.SettingsEntity;
 import se.anderssonbilly.faceRecogSettings.dao.SettingsRepository;
+import se.anderssonbilly.faceRecogSettings.dao.UserEntity;
 import se.anderssonbilly.faceRecogSettings.model.FaceDto;
 import se.anderssonbilly.faceRecogSettings.model.NotificationDto;
+import se.anderssonbilly.faceRecogSettings.model.PasswordDto;
 import se.anderssonbilly.faceRecogSettings.service.SecurityServiceImpl;
 import se.anderssonbilly.faceRecogSettings.service.UserServiceImpl;
 import se.anderssonbilly.faceRecogSettings.validation.NotificationValidator;
@@ -80,11 +87,18 @@ public class SettingsController {
 	public ResponseEntity<String> removeFace(@RequestBody long id) {
 
 		System.out.println("Remove face with id: " + id);
-		
+
 		if (!faceRepository.existsById(id))
 			return new ResponseEntity<>("Error: Face not found", HttpStatus.GONE);
 
+		SettingsEntity settings = userService.findByUsername(securityService.findLoggedInUsername()).getSettings();
+
 		faceRepository.deleteById(id);
+		if (settings.getRecognitionId() == id) {
+			settings.setRecognitionId((long) 0);
+			settingsRepository.save(settings);
+		}
+
 		if (faceRepository.existsById(id))
 			return new ResponseEntity<>("Error: Delete failed", HttpStatus.UNPROCESSABLE_ENTITY);
 
@@ -96,7 +110,7 @@ public class SettingsController {
 	public ResponseEntity<Set<FaceEntity>> getFace() {
 		Set<FaceEntity> faces = userService.findByUsername(securityService.findLoggedInUsername()).getSettings()
 				.getFaces();
-		
+
 		return new ResponseEntity<>(faces, HttpStatus.OK);
 	}
 
@@ -104,7 +118,7 @@ public class SettingsController {
 	public ResponseEntity<String> updateNotifyIf(@RequestBody boolean notifyIf) {
 
 		System.out.println("Notify if face is detected " + notifyIf);
-		
+
 		SettingsEntity settings = userService.findByUsername(securityService.findLoggedInUsername()).getSettings();
 		if (settings.isNotifyIfDetected() != notifyIf) {
 			settings.setNotifyIfDetected(notifyIf);
@@ -168,5 +182,54 @@ public class SettingsController {
 				.getSettings().getNotifications();
 
 		return new ResponseEntity<>(notifications, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/learnFace", method = RequestMethod.POST)
+	public ResponseEntity<String> learnFace(@RequestBody long id) {
+
+		System.out.println("Learn face with id: " + id);
+
+		if (!faceRepository.existsById(id))
+			return new ResponseEntity<>("Error: Face does not exist", HttpStatus.GONE);
+
+		SettingsEntity settings = userService.findByUsername(securityService.findLoggedInUsername()).getSettings();
+
+		if (settings.getRecognitionId() > 0) {
+			settings.setRecognitionId((long) 0);
+			settingsRepository.save(settings);
+			return new ResponseEntity<>("Success: Stopped learning face", HttpStatus.OK);
+		}
+
+		settings.setRecognitionId(id);
+		settingsRepository.save(settings);
+
+		return new ResponseEntity<>("Success: Started learning face", HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/changePassword", method = RequestMethod.POST)
+	public ResponseEntity<String> changePassword(@RequestBody @Valid PasswordDto passwordDto, BindingResult result) {
+
+		System.out.println("Changing password");
+
+		if (result.hasGlobalErrors())
+			if (result.getGlobalError().getCode().equals("PasswordMatches"))
+				result.addError(new FieldError("matchingPassword", "matchingPassword",
+						result.getGlobalError().getDefaultMessage()));
+
+		String error = "";
+		for (FieldError e : result.getFieldErrors()) 
+			if (!e.getDefaultMessage().isEmpty())
+				error+= e.getDefaultMessage() + ",";
+		
+		error = error.substring(0, error.length()-1);
+		
+		if (result.hasErrors())
+			return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+
+		UserEntity user = userService.findByUsername(securityService.findLoggedInUsername());
+		user.setPassword(passwordDto.getPassword());
+		userService.save(user);
+
+		return new ResponseEntity<>("Success: Password updated", HttpStatus.OK);
 	}
 }

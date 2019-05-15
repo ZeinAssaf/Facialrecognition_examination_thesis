@@ -7,21 +7,7 @@
 <body>
   <div th:fragment="content">
     <!--  -->
-    <!-- 
-Key
 
-Notification method
-  Add
-  Remove
-  
-Notification on exists or not
-
-Face
-  Add
-  Remove
-
-Change Password 
--->
     <h1>Settings</h1>
 
     <div class="grid-x grid-padding-x">
@@ -40,12 +26,17 @@ Change Password
                 <option th:if="${#lists.isEmpty(settings.faces)}">None</option>
             </select>
             </label>
+            <p>
+              Status: <span id="learn-face-status" th:data-learn-id="${settings.recognitionId}"
+                th:data-learning="${settings.recognitionId} > 0 ? enabled: disabled"
+                th:text="${settings.recognitionId} > 0 ? 'Learning face ' + ${settings.faces.?[id == settings.recognitionId][0].name}: 'Detecting'"></span>
+            </p>
             <div class="button-group">
               <a class="button" id="open-face-modal" data-open="add-face-modal">Create</a> <a id="remove-face" class="button error"
-                th:classappend="${#lists.isEmpty(settings.faces)} ? disabled">Remove</a>
-              <p class="error error-message" id="face-error"></p>
+                th:classappend="${#lists.isEmpty(settings.faces)} ? disabled">Remove</a> <a id="learn-face" class="button success"
+                th:classappend="${#lists.isEmpty(settings.faces)} ? disabled" th:text="${settings.recognitionId} > 0 ? 'Stop Learn': 'Learn'">Learn</a>
             </div>
-
+            <p class="error error-message" id="face-error"></p>
 
             <div class="reveal" id="add-face-modal" data-reveal>
               <h1>Create Face</h1>
@@ -60,7 +51,7 @@ Change Password
         </fieldset>
 
         <fieldset class="large-5 cell form-border">
-          <legend>Notification if face is</legend>
+          <legend>Notify if face is</legend>
           <input type="radio" name="notify-if" value="true" th:checked="${settings.notifyIfDetected == true}? true : false" id="notify-if-true"
             required> <label for="notify-if-true">detected</label> <input type="radio" name="notify-if" value="false"
             th:checked="${settings.notifyIfDetected == true}? false : true" id="notify-if-false"> <label for="notify-if-false">not
@@ -79,9 +70,9 @@ Change Password
                 <a class="button open-notification-modal" th:data-notification-type="${name}" data-open="add-notification-modal">Create</a> <a
                   class="remove-notification button error" th:data-notification-type="${name}"
                   th:classappend="${#lists.isEmpty(settings.notifications)} ? disabled">Remove</a>
-                <p class="error error-message" th:id="${name} + '-error'"></p>
-              </div>
 
+              </div>
+              <p class="error error-message" th:id="${name} + '-error'"></p>
               <hr>
             </div>
 
@@ -94,6 +85,16 @@ Change Password
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
+          </form>
+        </fieldset>
+
+        <fieldset class="form-border">
+          <legend>Change Password</legend>
+          <form id="change-password-form">
+            <label>Password <input id="password" type="password" placeholder="Password">
+            </label> <label>Confirm password <input id="matching-password" type="password" placeholder="Password">
+            </label> <a id="change-password" class="button">Create</a>
+            <ul id="password-error" class="error"></ul>
           </form>
         </fieldset>
 
@@ -122,10 +123,12 @@ Change Password
             var addNotificationUrl = "/addNotification";
             var removeNotificationUrl = "/removeNotification";
             var getNotificationsUrl = "/getNotifications";
-
+			var learnFaceUrl = "/learnFace";
+            var changePasswordUrl = "/changePassword";
+			
             /*<![CDATA[*/
             var notificationTypes = /*[[${T(se.anderssonbilly.faceRecogSettings.dao.NotificationTypeEnum).values()}]]*/;
-            var notifications = /*[[${settings.notifications}]]*/
+            var notifications = /*[[${settings.notifications}]]*/;
             /*]]>*/
             
             //
@@ -173,7 +176,10 @@ Change Password
                 
                 confirm("Delete face?",$("#faces option:selected").text(), function() {
                   $(this).addClass("disabled");
-                  ajaxPost(removeFaceUrl, $("#faces").val(), function() {
+                  var removeId = $("#faces").val();
+                  ajaxPost(removeFaceUrl, removeId, function() {
+                    if(removeId == $("#learn-face-status").attr("data-learn-id"))
+                      setLearnFaceText(false);
                     getFaces();
                   }, function(data) {
                     $("#remove-face").removeClass("disabled");
@@ -183,26 +189,63 @@ Change Password
                 
               }
             });
-
+            
+            // When clicking learn toggle recognitionId in database
+            $("#learn-face").on("click",function(){
+              if (!$(this).hasClass("disabled")) {
+                toggleLearnFace($("#faces").val());
+              }
+            });
+            
+            // Function to toggle recognitionId
+            function toggleLearnFace(id){
+              ajaxPost(learnFaceUrl, id, function() {
+                $("#learn-face-status").attr("data-learn-id", id);
+                $("#learn-face-status").attr("data-learning", 
+                    $("#learn-face-status").attr("data-learning") == "enabled" ? "disabled" : "enabled");
+                if($("#learn-face-status").attr("data-learning") == "enabled")
+                  setLearnFaceText(true, $("#faces option:selected").text());
+                else
+                  setLearnFaceText(false);
+              }, function(data) {
+                $("#learn-face-status").text(data.responseText);
+              });
+            }
+            
+            //Function to set text of learn status and button
+			function setLearnFaceText(enabled, face){
+			  if(enabled){
+                $("#learn-face-status").text("Learning face " + face);
+              	$("#learn-face").text("Stop Learn");
+			  }else{
+                $("#learn-face-status").text("Detecting");
+                $("#learn-face").text("Learn");
+			  }
+			}
+            
             // Method to GET faces from db
             var getFaces = function() {
               ajaxGet(getFacesUrl, function(data) {
                 $("#faces").html("");
                 if (data.length > 0) {
                   $("#faces").prop("disabled", false);
+                  $("#learn-face").removeClass("disabled");
                   $("#remove-face").removeClass("disabled");
                   $.each(data, function(i, val) {
                     $("#faces").append("<option id='" + val.id + "' value='" + val.id + "'>" + val.name + "</option>");
                   });
                 } else {
                   $("#faces").prop("disabled", true);
+                  $("#remove-face").addClass("disabled");
+                  $("#learn-face").addClass("disabled");
+				  setLearnFaceText(false);
                   $("#faces").append("<option>None</option>");
                 }
               }, function(data) {
                 $("#get-error").append("\nCould not get Faces.");
               });
             }
-
+            
             //
             ///////////////////////////////
 
@@ -310,6 +353,45 @@ Change Password
             //
             ///////////////////
 
+            /////////////////////
+            // Change Password //
+            /////////////////////
+            //
+            
+            $("#change-password").on("click",function(){
+              $("#password-error").text("");
+              $("#password").removeClass("inputError");
+              $("#matching-password").removeClass("inputError");
+              
+              ajaxPost(changePasswordUrl,
+                  {
+                	"password": $("#password").val(),
+                	"matchingPassword": $("#matching-password").val()
+                  },
+                  function(){
+                    $("#password").val("");
+                    $("#matching-password").val("");
+                  },
+                  function(data){
+                    $("#matching-password").val("");
+                    
+                    $("#password").addClass("inputError");
+                    $("#matching-password").addClass("inputError");
+                    
+                    //$("#password-error").text(data.responseText);
+                    var errors = data.responseText.split(",");
+                    $.each(errors, function(i,val){
+                      $("#password-error").append($("<li>").html(val));
+                      //if(i < errors.length -1)
+                        //$("#password-error").append("<br>");
+                    });
+                    
+                  });
+            });
+            
+            //
+            /////////////////////
+            
             /////////////
             // Methods //
             /////////////
@@ -338,6 +420,9 @@ Change Password
             var ajaxGet = function(url, success, error) {
               $(".error-message").text("");
               $("#notifyIfStatus").text("");
+              $("#password-error").text("");
+              $("#password").removeClass("inputError");
+              $("#matching-password").removeClass("inputError");
               $.ajax({
                 type : "GET",
                 contentType : "application/json",
