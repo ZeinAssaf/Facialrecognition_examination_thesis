@@ -1,7 +1,5 @@
 package entity;
 
-
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -31,13 +29,12 @@ public class FaceEntity {
 	@JsonIgnore
 	private SettingsEntity settings;
 
-	
 	@ManyToOne
 	@JoinColumn(name = "settings_id", nullable = false)
 	public SettingsEntity getSettings() {
 		return settings;
 	}
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	public Long getId() {

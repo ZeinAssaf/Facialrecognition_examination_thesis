@@ -14,12 +14,12 @@ public class NotificationDao {
 	private static final String MESSAGE = "Someone with a wierd face entered the room";
 	private NotificationFactory factory = new NotificationFactory();
 
-	public void notifyUser(String api_key) {
+	public void notifyUser(String apiKey) {
 		Session session = CustomSessionFactory.getInstance().getCurrentSession();
 		session.beginTransaction();
 
 		SettingsEntity user = (SettingsEntity) session.createQuery("from SettingsEntity e where e.apiKey= :api_key")
-				.setParameter("api_key", api_key).getSingleResult();
+				.setParameter("api_key", apiKey).getSingleResult();
 		System.out.println("hellooooo " + user.getId());
 
 		List<NotificationEntity> notifications = session
