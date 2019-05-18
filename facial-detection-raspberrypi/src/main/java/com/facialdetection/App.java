@@ -18,9 +18,11 @@ public class App {
 		try {
 			detector.detectFace();
 			while (true) {
-				BufferedImage face = ImageIO.read(new File("C:/Users/Zein/Desktop/new.png"));
+				File image=new File("C:/Users/Zein/Desktop/new.png");
+				BufferedImage face = ImageIO.read(image);
 				String encodedImage = detector.convertImageToString(face);
 				detector.postImage(targeturl, encodedImage);
+	
 				Thread.sleep(5000);
 			}
 		} catch (VideoCaptureException e) {
